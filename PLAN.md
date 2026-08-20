@@ -42,11 +42,10 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 
 **Goal:** Connect to Cloud Firestore and implement basic CRUD persistence.
 
-- [ ] **Task 2.1: Add Firestore dependencies and typed configuration**
+- [x] **Task 2.1: Add Firestore dependencies and typed configuration**
     - Add the Google Cloud libraries BOM and Firestore SDK to `build.gradle`.
-    - Create `config/RecallProperties.java` using `@ConfigurationProperties(prefix = "recall")` for `gcpProjectId`,
-      `firestoreCollection` (default `memories`), `geminiApiKey`, `geminiModel` (default `gemini-2.5-flash`), and
-      `authToken`.
+    - Create `config/RecallProperties.java` using `@ConfigurationProperties(prefix = "recall")` for `gcpProjectId`.
+    - Defer `firestoreCollection`, Gemini properties, and `authToken` until their respective tasks require them.
 - [ ] **Task 2.2: Define the `Memory` domain entity**
     - Include `id`, `text`, `userId`, `appId`, nullable `agentId` and `runId`, `metadata`, `embedding`, `createdAt`, and
       `updatedAt`.

@@ -27,6 +27,8 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+    implementation platform('com.google.cloud:libraries-bom:26.86.0')
+    implementation 'com.google.cloud:google-cloud-firestore'
 }
 
 tasks.named('test') {
