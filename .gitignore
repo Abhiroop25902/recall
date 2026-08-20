@@ -1,0 +1,49 @@
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Gradle and build output
+.gradle/
+build/
+bin/
+out/
+
+# Keep the Gradle wrapper available to every clone.
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE metadata
+.idea/
+.vscode/
+*.iws
+*.iml
+*.ipr
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.apt_generated/
+
+# Other IDE/build-tool output
+HELP.md
+/.nb-gradle/
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+
+# Local agent/tool state
+.serena/
+
+# Logs and temporary files
+*.log
+logs/
+*.tmp
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+src/main/resources/application-local.properties
+src/main/resources/application-*.local.properties
