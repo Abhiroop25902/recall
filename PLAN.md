@@ -4,6 +4,7 @@ This file tracks implementation work. The current architecture and package layou
 
 ## Progress
 
+- [x] Initial project commit: `2535fa4` (`initial commit`)
 - [ ] Day 1: Project bootstrapping & local setup — implementation complete; run the verification steps.
 - [ ] Day 2: Domain model & Firestore configuration
 - [ ] Day 3: Firestore vector similarity search
