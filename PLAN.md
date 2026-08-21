@@ -46,14 +46,17 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
     - Add the Google Cloud libraries BOM and Firestore SDK to `build.gradle`.
     - Create `config/RecallProperties.java` using `@ConfigurationProperties(prefix = "recall")` for `gcpProjectId`.
     - Defer `firestoreCollection`, Gemini properties, and `authToken` until their respective tasks require them.
-- [ ] **Task 2.2: Define the `Memory` domain entity**
-    - Include `id`, `text`, `userId`, `appId`, nullable `agentId` and `runId`, `metadata`, `embedding`, `createdAt`, and
-      `updatedAt`.
-- [ ] **Task 2.3: Firestore client and repository**
+- [x] **Task 2.2: Define the `Memory` domain entity**
+    - Include the Firestore document `id`, required `appId` as the folder namespace, `text`, `embedding` as a native
+      Firestore vector, and `createdAt`.
+    - Memory changes use delete-then-create; there is no in-place update or `updatedAt` field.
+    - Add a unit test rejecting null or blank `appId` values.
+- [x] **Task 2.3: Firestore client and repository**
     - Add `config/FirestoreConfig.java` and a `MemoryRepository` with a Firestore-backed implementation.
-    - Support save, find by id, delete by id, and scoped listing by user and app.
+    - Support save, find by id, delete by id, and listing scoped by `appId`.
 - [ ] **Verification**
-    - Save a test memory document and read it back from Firestore.
+    - Use the Firestore emulator or a configured project to save a test memory document, read it back, delete it, and
+      confirm folder-scoped listing.
 
 ---
 
@@ -62,9 +65,9 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 **Goal:** Implement scoped vector similarity search using Firestore native vector queries.
 
 - [ ] **Task 3.1: Repository contract**
-    - Add `searchSimilar(String userId, String appId, List<Double> queryVector, int topK, double threshold)`.
+    - Add `searchSimilar(String appId, List<Double> queryVector, int topK, double threshold)`.
 - [ ] **Task 3.2: Firestore query**
-    - Use cosine distance with `userId` and `appId` filters before the nearest-neighbor query.
+    - Use the `appId` filter before the nearest-neighbor query and rank by cosine distance.
 - [ ] **Task 3.3: Result mapping**
     - Add `MemorySearchResult` and filter results below the requested threshold.
 - [ ] **Verification**
@@ -96,7 +99,7 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 - [ ] **Task 5.2: LLM extraction**
     - Implement structured JSON fact extraction in `GeminiClient`.
 - [ ] **Task 5.3: Memory engine**
-    - Search comparable memories, choose ADD, UPDATE, DELETE, or NOOP, then apply the matching repository operation.
+    - Search comparable memories, choose ADD, DELETE, or NOOP; replace stale memories with delete then create.
 - [ ] **Verification**
     - Process a multi-turn conversation and confirm clean fact storage without duplicates.
 
