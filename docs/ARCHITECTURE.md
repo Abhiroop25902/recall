@@ -28,9 +28,10 @@ src/main/java/com/abhiroop/recall/
 ├── RecallApplication.java
 ├── config/       # Configuration properties, Firestore, security
 ├── controller/   # HTTP endpoints
+├── entity/       # Firestore-backed domain records
 ├── llm/          # Gemini integration and prompts
 ├── mcp/          # MCP transport and tool handlers
-├── model/        # Domain records and DTOs
+├── model/        # Request and response DTOs
 ├── repository/   # Firestore persistence and vector search
 └── service/      # Application workflows and memory engine
 ```

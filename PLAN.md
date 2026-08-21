@@ -6,8 +6,8 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 ## Progress
 
 - [x] Initial project commit: `2535fa4` (`initial commit`)
-- [ ] Day 1: Project bootstrapping & local setup — implementation complete; run the verification steps.
-- [ ] Day 2: Domain model & Firestore configuration
+- [x] Day 1: Project bootstrapping & local setup — implementation and runtime verification complete.
+- [ ] Day 2: Domain model & Firestore configuration — implementation complete; Firestore CRUD verification pending.
 - [ ] Day 3: Firestore vector similarity search
 - [ ] Day 4: Gemini text embeddings client
 - [ ] Day 5: Gemini fact extraction & deduplication
