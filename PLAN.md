@@ -3,18 +3,20 @@
 This file tracks implementation work. The current architecture and package layout live
 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 guidance live in [AGENTS.md](AGENTS.md).
 
+Recall's application interface is a stateless Streamable HTTP MCP server for OpenCode. There is no custom REST memory API;
+the existing health endpoint remains for service health checks.
+
 ## Progress
 
 - [x] Initial project commit: `2535fa4` (`initial commit`)
 - [x] Day 1: Project bootstrapping & local setup — implementation and runtime verification complete.
 - [ ] Day 2: Domain model & Firestore configuration — implementation complete; Firestore CRUD verification pending.
-- [ ] Day 3: Firestore vector similarity search
-- [ ] Day 4: Gemini text embeddings client
-- [ ] Day 5: Gemini fact extraction & deduplication
-- [ ] Day 6: REST API & authentication
-- [ ] Day 7: MCP server
-- [ ] Day 8: Dockerfile & Cloud Run deployment
-- [ ] Day 9: IDE integration & cross-device verification
+- [ ] Day 3: Stateless MCP server & CRUD tools
+- [ ] Day 4: Cloud Run deployment
+- [ ] Day 5: Firestore vector similarity search
+- [ ] Day 6: Gemini text embeddings client
+- [ ] Day 7: Gemini fact extraction & deduplication
+- [ ] Day 8: OpenCode integration & cross-device verification
 
 ---
 
@@ -60,7 +62,37 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 
 ---
 
-## Day 3: Firestore Vector Similarity Search
+## Day 3: Stateless MCP Server & CRUD Tools
+
+**Goal:** Provide the first usable MCP interface for OpenCode.
+
+- [ ] **Task 3.1: MCP transport**
+    - Add the Spring AI WebMVC MCP server starter.
+    - Set `spring.ai.mcp.server.protocol=STATELESS`; use `/mcp` as the MCP endpoint.
+- [ ] **Task 3.2: CRUD tools**
+    - Expose `add_memory`, `get_memories`, and `delete_memory` as Spring AI `@Tool` methods.
+    - Back the tools with the Firestore repository and preserve delete-then-create memory changes.
+    - Defer `search_memories` until vector search and embeddings are available.
+- [ ] **Verification**
+    - Complete an MCP handshake and invoke each CRUD tool against the Firestore emulator or a configured project.
+
+---
+
+## Day 4: Cloud Run Deployment
+
+**Goal:** Host the stateless MCP server for OpenCode.
+
+- [ ] **Task 4.1: Dockerfile**
+    - Build with Gradle and run the executable Spring Boot jar on port 8080.
+- [ ] **Task 4.2: Deployment**
+    - Add a `gcloud run deploy` workflow with the Google Cloud project and Firestore access supplied through configuration.
+    - Protect `/mcp` with Cloud Run IAM or a configured bearer token; do not deploy an unauthenticated memory service.
+- [ ] **Verification**
+    - Confirm the health endpoint and complete the MCP handshake against the deployed `/mcp` endpoint.
+
+---
+
+## Day 5: Firestore Vector Similarity Search
 
 **Goal:** Implement scoped vector similarity search using Firestore native vector queries.
 
@@ -75,7 +107,7 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 
 ---
 
-## Day 4: Gemini Text Embeddings Client
+## Day 6: Gemini Text Embeddings Client
 
 **Goal:** Convert memory text and search queries into embeddings.
 
@@ -90,7 +122,7 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 
 ---
 
-## Day 5: Gemini Fact Extraction & Deduplication
+## Day 7: Gemini Fact Extraction & Deduplication
 
 **Goal:** Extract atomic facts and resolve duplicates or contradictions.
 
@@ -105,61 +137,16 @@ in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 gu
 
 ---
 
-## Day 6: REST API & Authentication
-
-**Goal:** Expose protected `/v1/memories` endpoints.
-
-- [ ] **Task 6.1: Request and response DTOs**
-    - Add request types for adding and searching memories, plus a `MemoryResponse`.
-- [ ] **Task 6.2: Memory controller**
-    - Implement add, search, get by id, delete by id, and scoped delete endpoints.
-- [ ] **Task 6.3: Authentication**
-    - Add an authentication filter for the configured token; design Cloud Run IAM integration separately from
-      local-token validation.
-- [ ] **Verification**
-    - Exercise add and search endpoints with authenticated requests.
-
----
-
-## Day 7: MCP Server
-
-**Goal:** Provide MCP tools for IDE agents.
-
-- [ ] **Task 7.1: MCP transport**
-    - Implement the selected MCP transport and message endpoint.
-- [ ] **Task 7.2: Tool handlers**
-    - Implement `add_memory`, `search_memories`, `get_memories`, and `delete_memory` through `MemoryService`.
-- [ ] **Task 7.3: Tool schemas**
-    - Register schemas compatible with the intended client contract.
-- [ ] **Verification**
-    - Complete an MCP handshake and invoke each tool through a local client.
-
----
-
-## Day 8: Dockerfile & Cloud Run Deployment
-
-**Goal:** Package the Gradle application and deploy it to Cloud Run.
-
-- [ ] **Task 8.1: Dockerfile**
-    - Build with Gradle and run the executable Spring Boot jar on port 8080.
-- [ ] **Task 8.2: Deployment script**
-    - Add a `gcloud run deploy` workflow with non-secret configuration supplied through environment variables or a
-      managed secret store.
-- [ ] **Task 8.3: Cloud Run verification**
-    - Confirm the deployed health endpoint and scale-to-zero behavior.
-
----
-
-## Day 9: IDE Integration & Cross-Device Verification
+## Day 8: OpenCode Integration & Cross-Device Verification
 
 **Goal:** Connect coding agents to the deployed memory service.
 
-- [ ] **Task 9.1: MCP client configuration**
+- [ ] **Task 8.1: MCP client configuration**
     - Document the deployed MCP URL and authentication setup without committing credentials.
-- [ ] **Task 9.2: End-to-end verification**
+- [ ] **Task 8.2: End-to-end verification**
     - Store a memory from one client and retrieve it from another environment.
 
 ## Completion criteria
 
-The project is complete when the deployed service accepts authenticated memory operations, persists and searches scoped
-memories, exposes compatible MCP tools, and passes end-to-end retrieval from a separate client.
+The project is complete when the deployed service accepts authenticated MCP tool calls from OpenCode, persists and searches
+scoped memories, and passes end-to-end retrieval from a separate client.
