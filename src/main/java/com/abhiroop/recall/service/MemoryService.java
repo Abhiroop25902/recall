@@ -18,7 +18,7 @@ public class MemoryService {
     }
 
     @Tool(description = "Save Memory")
-    private Memory saveMemory(SaveMemoryRequestDto dto) {
+    Memory saveMemory(SaveMemoryRequestDto dto) {
         return memoryRepository.save(
                 Memory
                         .builder()
@@ -29,12 +29,12 @@ public class MemoryService {
     }
 
     @Tool(description = "Get memories for an app")
-    private List<Memory> getMemories(String appId) {
+    List<Memory> getMemories(String appId) {
         return memoryRepository.findByAppId(appId);
     }
 
     @Tool(description = "Delete a memory by id")
-    private void deleteMemory(String id) {
+    void deleteMemory(String id) {
         memoryRepository.deleteById(id);
     }
 }
