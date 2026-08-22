@@ -11,7 +11,7 @@ the existing health endpoint remains for service health checks.
 - [x] Initial project commit: `2535fa4` (`initial commit`)
 - [x] Day 1: Project bootstrapping & local setup — implementation and runtime verification complete.
 - [ ] Day 2: Domain model & Firestore configuration — implementation complete; Firestore CRUD verification pending.
-- [ ] Day 3: Stateless MCP server & CRUD tools
+- [ ] Day 3: Stateless MCP server & CRUD tools — implementation complete; Firestore-backed CRUD verification pending.
 - [ ] Day 4: Cloud Run deployment
 - [ ] Day 5: Firestore vector similarity search
 - [ ] Day 6: Gemini text embeddings client
@@ -66,15 +66,18 @@ the existing health endpoint remains for service health checks.
 
 **Goal:** Provide the first usable MCP interface for OpenCode.
 
-- [ ] **Task 3.1: MCP transport**
+- [x] **Task 3.1: MCP transport**
     - Add the Spring AI WebMVC MCP server starter.
-    - Set `spring.ai.mcp.server.protocol=STATELESS`; use `/mcp` as the MCP endpoint.
-- [ ] **Task 3.2: CRUD tools**
-    - Expose `add_memory`, `get_memories`, and `delete_memory` as Spring AI `@Tool` methods.
+    - Set `spring.ai.mcp.server.protocol=STATELESS`; use `/api/mcp` as the MCP endpoint.
+- [x] **Task 3.2: CRUD tools**
+    - Expose `saveMemory`, `getMemories`, and `deleteMemory` as Spring AI `@Tool` methods.
+    - Use DTO input for MCP tools; keep the Firestore `Memory` entity inside the service/repository boundary.
     - Back the tools with the Firestore repository and preserve delete-then-create memory changes.
     - Defer `search_memories` until vector search and embeddings are available.
 - [ ] **Verification**
-    - Complete an MCP handshake and invoke each CRUD tool against the Firestore emulator or a configured project.
+    - [x] Complete an MCP handshake and discover the registered tools locally.
+    - [x] Invoke `saveMemory` through MCP using `ConsoleTestMemoryRepository`.
+    - [ ] Invoke all CRUD tools against the Firestore emulator or a configured project.
 
 ---
 
@@ -96,11 +99,11 @@ the existing health endpoint remains for service health checks.
 
 **Goal:** Implement scoped vector similarity search using Firestore native vector queries.
 
-- [ ] **Task 3.1: Repository contract**
+- [ ] **Task 5.1: Repository contract**
     - Add `searchSimilar(String appId, List<Double> queryVector, int topK, double threshold)`.
-- [ ] **Task 3.2: Firestore query**
+- [ ] **Task 5.2: Firestore query**
     - Use the `appId` filter before the nearest-neighbor query and rank by cosine distance.
-- [ ] **Task 3.3: Result mapping**
+- [ ] **Task 5.3: Result mapping**
     - Add `MemorySearchResult` and filter results below the requested threshold.
 - [ ] **Verification**
     - Query with a dummy 768-dimensional vector and confirm scoped, ranked results.
@@ -111,11 +114,11 @@ the existing health endpoint remains for service health checks.
 
 **Goal:** Convert memory text and search queries into embeddings.
 
-- [ ] **Task 4.1: Gemini client**
+- [ ] **Task 6.1: Gemini client**
     - Add `llm/GeminiClient.java` using Spring `RestClient` or the Google GenAI SDK.
-- [ ] **Task 4.2: Embedding service**
+- [ ] **Task 6.2: Embedding service**
     - Add `embedText(String text)` and `batchEmbedText(List<String> texts)`.
-- [ ] **Task 4.3: Search integration**
+- [ ] **Task 6.3: Search integration**
     - Combine embedding generation and vector search in `MemoryService.search(...)`.
 - [ ] **Verification**
     - Confirm an embedding request returns the expected vector dimensionality for the selected model.
@@ -126,11 +129,11 @@ the existing health endpoint remains for service health checks.
 
 **Goal:** Extract atomic facts and resolve duplicates or contradictions.
 
-- [ ] **Task 5.1: Extraction contract**
+- [ ] **Task 7.1: Extraction contract**
     - Add an `ExtractedFact` record and prompt template for category, text, and confidence.
-- [ ] **Task 5.2: LLM extraction**
+- [ ] **Task 7.2: LLM extraction**
     - Implement structured JSON fact extraction in `GeminiClient`.
-- [ ] **Task 5.3: Memory engine**
+- [ ] **Task 7.3: Memory engine**
     - Search comparable memories, choose ADD, DELETE, or NOOP; replace stale memories with delete then create.
 - [ ] **Verification**
     - Process a multi-turn conversation and confirm clean fact storage without duplicates.

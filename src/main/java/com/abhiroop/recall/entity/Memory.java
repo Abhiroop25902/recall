@@ -3,7 +3,9 @@ package com.abhiroop.recall.entity;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.VectorValue;
 import com.google.cloud.firestore.annotation.DocumentId;
+import lombok.Builder;
 
+@Builder
 public record Memory(
         @DocumentId String id,
         String appId,
