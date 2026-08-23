@@ -76,7 +76,7 @@ the existing health endpoint remains for service health checks.
     - Defer `search_memories` until vector search and embeddings are available.
 - [ ] **Verification**
     - [x] Complete an MCP handshake and discover the registered tools locally.
-    - [x] Invoke `saveMemory` through MCP using `ConsoleTestMemoryRepository`.
+    - [x] Verify local `saveMemory` MCP wiring.
     - [ ] Invoke all CRUD tools against the Firestore emulator or a configured project.
 
 ---

@@ -5,6 +5,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nonnull;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+@Primary
 @Repository
 public class FirestoreMemoryRepository implements MemoryRepository {
 
@@ -22,6 +24,25 @@ public class FirestoreMemoryRepository implements MemoryRepository {
 
     public FirestoreMemoryRepository(Firestore firestore) {
         this.firestore = firestore;
+    }
+
+    @Nonnull
+    private static String requireId(@Nullable String id) {
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException("id must not be blank");
+        }
+        return id;
+    }
+
+    private static <T> T await(ApiFuture<T> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Firestore operation interrupted", exception);
+        } catch (ExecutionException exception) {
+            throw new IllegalStateException("Firestore operation failed", exception.getCause());
+        }
     }
 
     @Override
@@ -57,30 +78,11 @@ public class FirestoreMemoryRepository implements MemoryRepository {
         }
 
         return await(firestore.collection(COLLECTION)
-                        .whereEqualTo("appId", appId)
-                        .get())
+                .whereEqualTo("appId", appId)
+                .get())
                 .getDocuments()
                 .stream()
                 .map(document -> document.toObject(Memory.class))
                 .toList();
-    }
-
-    @Nonnull
-    private static String requireId(@Nullable String id) {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("id must not be blank");
-        }
-        return id;
-    }
-
-    private static <T> T await(ApiFuture<T> future) {
-        try {
-            return future.get();
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Firestore operation interrupted", exception);
-        } catch (ExecutionException exception) {
-            throw new IllegalStateException("Firestore operation failed", exception.getCause());
-        }
     }
 }
