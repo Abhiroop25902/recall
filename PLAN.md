@@ -10,9 +10,9 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 - [x] Initial project commit: `2535fa4` (`initial commit`)
 - [x] Day 1: Project bootstrapping & local setup — implementation and runtime verification complete.
-- [ ] Day 2: Domain model & Firestore configuration — implementation complete; Firestore CRUD verification pending.
-- [ ] Day 3: Stateless MCP server & CRUD tools — implementation complete; Firestore-backed CRUD verification pending.
-- [ ] Day 4: Cloud Run deployment
+- [x] Day 2: Domain model & Firestore configuration — implementation and Firestore CRUD verification complete.
+- [x] Day 3: Stateless MCP server & CRUD tools — implementation and Firestore-backed CRUD verification complete.
+- [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [ ] Day 5: Firestore vector similarity search
 - [ ] Day 6: Gemini text embeddings client
 - [ ] Day 7: Gemini fact extraction & deduplication
@@ -56,9 +56,9 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] **Task 2.3: Firestore client and repository**
     - Add `config/FirestoreConfig.java` and a `MemoryRepository` with a Firestore-backed implementation.
     - Support save, find by id, delete by id, and listing scoped by `appId`.
-- [ ] **Verification**
-    - Use the Firestore emulator or a configured project to save a test memory document, read it back, delete it, and
-      confirm folder-scoped listing.
+- [x] **Verification**
+    - Saved a test memory document through the deployed MCP server, retrieved it by `appId`, deleted it, and confirmed
+      Firestore persistence in the configured project.
 
 ---
 
@@ -74,10 +74,10 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
     - Use DTO input for MCP tools; keep the Firestore `Memory` entity inside the service/repository boundary.
     - Back the tools with the Firestore repository and preserve delete-then-create memory changes.
     - Defer `search_memories` until vector search and embeddings are available.
-- [ ] **Verification**
+- [x] **Verification**
     - [x] Complete an MCP handshake and discover the registered tools locally.
     - [x] Verify local `saveMemory` MCP wiring.
-    - [ ] Invoke all CRUD tools against the Firestore emulator or a configured project.
+    - [x] Invoke all CRUD tools against the Firestore emulator or a configured project.
 
 ---
 
@@ -92,17 +92,15 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
     - Require `Authorization: Bearer <RECALL_API_KEY>` for `/v1/mcp` and return `401` for missing or invalid keys.
     - Keep `GET /v1/health` available without an API key for health checks.
     - [x] Add tests for missing, invalid, and valid credentials before deployment.
-- [ ] **Task 4.2: Dockerfile**
-    - Build with Gradle and run the executable Spring Boot jar on port 8080.
-- [ ] **Task 4.3: Deployment**
-    - Add a `gcloud run deploy` workflow with the Google Cloud project and Firestore access supplied through configuration.
+- [x] **Task 4.2: Managed deployment**
+    - Deploy through the configured Cloud Build GitHub push trigger; the Cloud Run Java buildpack builds and runs the application.
     - Store `RECALL_API_KEY` in Secret Manager and grant the Cloud Run runtime service account access to resolve it directly.
     - Use Cloud Run public access intentionally; the application-level API-key filter protects `/v1/mcp`.
     - Grant the runtime service account only the Firestore and Secret Manager permissions it needs.
-- [ ] **Verification**
-    - [ ] Record the deployed service URL and confirm `GET /v1/health` is public.
-    - [ ] Confirm deployed `/v1/mcp` returns `401` for missing and invalid bearer keys.
-    - [ ] Complete an authenticated MCP handshake against the deployed `/v1/mcp` endpoint.
+- [x] **Verification**
+    - [x] Confirm `GET /v1/health` is public at `https://recall-768264222351.asia-south1.run.app`.
+    - [x] Confirm deployed `/v1/mcp` returns `401` for missing and invalid bearer keys.
+    - [x] Complete an authenticated MCP handshake and CRUD tool calls against the deployed `/v1/mcp` endpoint.
 
 ---
 

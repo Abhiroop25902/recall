@@ -30,6 +30,7 @@
 
 ## Cloud Run conventions
 
+- Deployments run through the configured Cloud Build GitHub push trigger. Do not add a Dockerfile or manual `gcloud run deploy` workflow unless the buildpack flow no longer meets a concrete need.
 - Resolve `RECALL_API_KEY` directly from Secret Manager with `sm@RECALL_API_KEY` and `spring.config.import=sm@`; do not mount the secret as a Cloud Run environment variable.
 - The Cloud Run runtime service account needs `roles/secretmanager.secretAccessor` on the `RECALL_API_KEY` secret and `roles/datastore.user` for Firestore. The deployer, not the runtime service account, needs `roles/iam.serviceAccountUser` to attach it.
 - Tests must disable `spring.config.import` and provide a local `sm@RECALL_API_KEY` value so they never call Google Cloud.
