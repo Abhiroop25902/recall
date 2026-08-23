@@ -24,9 +24,10 @@ Recall is a cloud-hosted memory service for coding agents. It exposes a versione
 
 ## Deployment security
 
-- The initial deployment is single-user and uses one externally supplied `RECALL_API_KEY`.
-- Cloud Run will inject the key from Secret Manager; the key must not be committed to configuration or logs.
-- `/v1/mcp` will require `Authorization: Bearer <RECALL_API_KEY>` before Cloud Run deployment.
+- The initial deployment is single-user and uses one `RECALL_API_KEY` stored in Secret Manager.
+- Spring Cloud GCP resolves the key directly using `sm@RECALL_API_KEY` and the Cloud Run service identity; the key must not be committed to configuration, logs, or environment variables.
+- The runtime service account has Secret Manager Secret Accessor on that secret and Cloud Datastore User for Firestore.
+- `/v1/mcp` requires `Authorization: Bearer <RECALL_API_KEY>`.
 - `/v1/health` remains unauthenticated for health checks.
 - Cloud Run public access is intentional for remote MCP connectivity; application-level authentication protects memory operations.
 

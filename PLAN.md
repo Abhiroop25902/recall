@@ -85,23 +85,24 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 **Goal:** Host the stateless MCP server for OpenCode.
 
-- [ ] **Task 4.1: Single-user API-key authentication**
+- [x] **Task 4.1: Single-user API-key authentication**
     - Add application-level bearer authentication for this single-user deployment.
     - Use one shared key for the owner; defer customer accounts, key registries, and per-customer authorization.
-    - Load a separate `RECALL_API_KEY` from external configuration; never commit or log the key.
+    - Resolve `RECALL_API_KEY` directly from Secret Manager through `sm@`; never commit, log, or mount the key as an environment variable.
     - Require `Authorization: Bearer <RECALL_API_KEY>` for `/v1/mcp` and return `401` for missing or invalid keys.
     - Keep `GET /v1/health` available without an API key for health checks.
-    - Add tests for missing, invalid, and valid credentials before deployment.
+    - [x] Add tests for missing, invalid, and valid credentials before deployment.
 - [ ] **Task 4.2: Dockerfile**
     - Build with Gradle and run the executable Spring Boot jar on port 8080.
 - [ ] **Task 4.3: Deployment**
     - Add a `gcloud run deploy` workflow with the Google Cloud project and Firestore access supplied through configuration.
-    - Store `RECALL_API_KEY` in Secret Manager and inject it into the Cloud Run revision.
+    - Store `RECALL_API_KEY` in Secret Manager and grant the Cloud Run runtime service account access to resolve it directly.
     - Use Cloud Run public access intentionally; the application-level API-key filter protects `/v1/mcp`.
     - Grant the runtime service account only the Firestore and Secret Manager permissions it needs.
 - [ ] **Verification**
-    - Confirm the public health endpoint and `401` responses for missing or invalid keys.
-    - Complete the authenticated MCP handshake against the deployed `/v1/mcp` endpoint.
+    - [ ] Record the deployed service URL and confirm `GET /v1/health` is public.
+    - [ ] Confirm deployed `/v1/mcp` returns `401` for missing and invalid bearer keys.
+    - [ ] Complete an authenticated MCP handshake against the deployed `/v1/mcp` endpoint.
 
 ---
 
