@@ -10,9 +10,25 @@
 - Local server: port 8080 by default
 - Development reload: Spring Boot DevTools with continuous Gradle compilation
 
+## HTTP surface
+
+- `GET /v1/health` returns the service health response.
+- `/v1/mcp` is the stateless Streamable HTTP MCP endpoint that exposes memory tools.
+- Memory operations currently use MCP tools; there is no custom REST memory API.
+- The `/v1` URL namespace is independent of the MCP protocol version configured by
+  `spring.ai.mcp.server.version`.
+
 ## Product target
 
-Recall is a cloud-hosted memory service for coding agents. It will expose REST endpoints under `/v1`, an MCP-compatible server, and persistent memory backed by Google Cloud Firestore with vector search. Gemini/Vertex AI will provide embeddings and fact extraction; Cloud Run is the deployment target.
+Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore and vector search. Gemini/Vertex AI will provide embeddings and fact extraction; Cloud Run is the deployment target.
+
+## Deployment security
+
+- The initial deployment is single-user and uses one externally supplied `RECALL_API_KEY`.
+- Cloud Run will inject the key from Secret Manager; the key must not be committed to configuration or logs.
+- `/v1/mcp` will require `Authorization: Bearer <RECALL_API_KEY>` before Cloud Run deployment.
+- `/v1/health` remains unauthenticated for health checks.
+- Cloud Run public access is intentional for remote MCP connectivity; application-level authentication protects memory operations.
 
 ## Memory model
 

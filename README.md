@@ -2,6 +2,14 @@
 
 Recall is a personal, cloud-hosted memory service for coding agents.
 
+## Project scope
+
+Recall is a hobby project designed for personal, single-user use. It requires you to provision and manage your own cloud infrastructure and associated costs.
+
+Recall is inspired by my experience using Mem0. Mem0 is a great product, and the fact that I want to build a focused project with a similar goal is a testament to how valuable I find it.
+
+If you prefer a managed memory service with minimal setup and customer support, consider using Mem0 instead.
+
 ## Why I am building this
 
 I use Mem0 to give coding agents persistent context, but the free tier is too limited for regular use. The Mem0 dashboard currently shows a hobby plan with limited retrieval capacity, while the paid plan is roughly **₹2,000 per month** in my local estimate.
@@ -17,8 +25,8 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 - Persistent memories scoped by user and application.
 - Semantic search over stored memories using vector embeddings.
 - Fact extraction and duplicate/contradiction handling.
-- REST endpoints under `/v1`.
-- MCP-compatible tools for coding agents.
+- `GET /v1/health` for service health checks.
+- MCP-compatible memory tools at `/v1/mcp`.
 - Google Cloud Firestore persistence and Google Cloud Run deployment.
 
 ## Current development baseline
@@ -30,6 +38,23 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 - Configuration: `application.properties`
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the durable architecture and [PLAN.md](PLAN.md) for the implementation roadmap.
+
+## HTTP endpoints
+
+The local service exposes:
+
+- Health: `http://localhost:8080/v1/health`
+- MCP: `http://localhost:8080/v1/mcp`
+
+Memory operations are currently exposed through MCP tools rather than custom REST endpoints.
+
+Cloud Run deployment will use one Secret Manager-backed `RECALL_API_KEY` and require this header for `/v1/mcp`:
+
+```http
+Authorization: Bearer <RECALL_API_KEY>
+```
+
+Do not commit the key or place it in a URL.
 
 ## Run locally
 
@@ -45,7 +70,7 @@ In another terminal, enable compile-on-save support for DevTools:
 ./gradlew classes --continuous
 ```
 
-The initial health endpoint is available at:
+The health endpoint is available at:
 
 ```text
 http://localhost:8080/v1/health

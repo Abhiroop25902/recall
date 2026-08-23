@@ -4,7 +4,7 @@ This file tracks implementation work. The current architecture and package layou
 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 guidance live in [AGENTS.md](AGENTS.md).
 
 Recall's application interface is a stateless Streamable HTTP MCP server for OpenCode. There is no custom REST memory API;
-the existing health endpoint remains for service health checks.
+the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 ## Progress
 
@@ -47,7 +47,7 @@ the existing health endpoint remains for service health checks.
 - [x] **Task 2.1: Add Firestore dependencies and typed configuration**
     - Add the Google Cloud libraries BOM and Firestore SDK to `build.gradle`.
     - Create `config/RecallProperties.java` using `@ConfigurationProperties(prefix = "recall")` for `gcpProjectId`.
-    - Defer `firestoreCollection`, Gemini properties, and `authToken` until their respective tasks require them.
+    - Defer `firestoreCollection`, Gemini properties, and authentication properties until their respective tasks require them.
 - [x] **Task 2.2: Define the `Memory` domain entity**
     - Include the Firestore document `id`, required `appId` as the folder namespace, `text`, `embedding` as a native
       Firestore vector, and `createdAt`.
@@ -68,7 +68,7 @@ the existing health endpoint remains for service health checks.
 
 - [x] **Task 3.1: MCP transport**
     - Add the Spring AI WebMVC MCP server starter.
-    - Set `spring.ai.mcp.server.protocol=STATELESS`; use `/api/mcp` as the MCP endpoint.
+    - Set `spring.ai.mcp.server.protocol=STATELESS`; use `/v1/mcp` as the MCP endpoint.
 - [x] **Task 3.2: CRUD tools**
     - Expose `saveMemory`, `getMemories`, and `deleteMemory` as Spring AI `@Tool` methods.
     - Use DTO input for MCP tools; keep the Firestore `Memory` entity inside the service/repository boundary.
@@ -85,13 +85,23 @@ the existing health endpoint remains for service health checks.
 
 **Goal:** Host the stateless MCP server for OpenCode.
 
-- [ ] **Task 4.1: Dockerfile**
+- [ ] **Task 4.1: Single-user API-key authentication**
+    - Add application-level bearer authentication for this single-user deployment.
+    - Use one shared key for the owner; defer customer accounts, key registries, and per-customer authorization.
+    - Load a separate `RECALL_API_KEY` from external configuration; never commit or log the key.
+    - Require `Authorization: Bearer <RECALL_API_KEY>` for `/v1/mcp` and return `401` for missing or invalid keys.
+    - Keep `GET /v1/health` available without an API key for health checks.
+    - Add tests for missing, invalid, and valid credentials before deployment.
+- [ ] **Task 4.2: Dockerfile**
     - Build with Gradle and run the executable Spring Boot jar on port 8080.
-- [ ] **Task 4.2: Deployment**
+- [ ] **Task 4.3: Deployment**
     - Add a `gcloud run deploy` workflow with the Google Cloud project and Firestore access supplied through configuration.
-    - Protect `/mcp` with Cloud Run IAM or a configured bearer token; do not deploy an unauthenticated memory service.
+    - Store `RECALL_API_KEY` in Secret Manager and inject it into the Cloud Run revision.
+    - Use Cloud Run public access intentionally; the application-level API-key filter protects `/v1/mcp`.
+    - Grant the runtime service account only the Firestore and Secret Manager permissions it needs.
 - [ ] **Verification**
-    - Confirm the health endpoint and complete the MCP handshake against the deployed `/mcp` endpoint.
+    - Confirm the public health endpoint and `401` responses for missing or invalid keys.
+    - Complete the authenticated MCP handshake against the deployed `/v1/mcp` endpoint.
 
 ---
 
@@ -145,7 +155,7 @@ the existing health endpoint remains for service health checks.
 **Goal:** Connect coding agents to the deployed memory service.
 
 - [ ] **Task 8.1: MCP client configuration**
-    - Document the deployed MCP URL and authentication setup without committing credentials.
+    - Document the deployed `/v1/mcp` URL and authentication setup without committing credentials.
 - [ ] **Task 8.2: End-to-end verification**
     - Store a memory from one client and retrieve it from another environment.
 
