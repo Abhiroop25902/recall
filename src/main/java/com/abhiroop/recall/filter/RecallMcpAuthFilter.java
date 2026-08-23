@@ -7,32 +7,32 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
 @Slf4j
-@Component
 public class RecallMcpAuthFilter extends OncePerRequestFilter {
 
-    @Value("${sm@RECALL_API_KEY}")
-    private @Nullable String recallApiKey;
+    private final @Nullable String recallApiKey;
+
+    public RecallMcpAuthFilter(@Nullable String recallApiKey) {
+        this.recallApiKey = recallApiKey;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getServletPath().equals("/v1/mcp");
+        return !request.getRequestURI().equals("/v1/mcp");
     }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         if (recallApiKey == null) {
-            log.error("${sm://RECALL_API_KEY} did not yield any value; Check Google Cloud Secrets");
+            log.error("${sm@RECALL_API_KEY} did not yield any value; Check Google Cloud Secrets");
 
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             response.getWriter().write(HttpStatus.INTERNAL_SERVER_ERROR.toString());

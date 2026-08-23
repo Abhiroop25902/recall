@@ -2,6 +2,7 @@ package com.abhiroop.recall.config;
 
 import com.abhiroop.recall.filter.RecallMcpAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,8 +18,8 @@ public class RecallMcpSecurityConfig {
     private final RecallMcpAuthFilter authFilter;
 
     @Autowired
-    public RecallMcpSecurityConfig(RecallMcpAuthFilter authFilter) {
-        this.authFilter = authFilter;
+    public RecallMcpSecurityConfig(@Value("${sm@RECALL_API_KEY}") String recallApiKey) {
+        this.authFilter = new RecallMcpAuthFilter(recallApiKey);
     }
 
     @Bean
