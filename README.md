@@ -22,7 +22,7 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 
 ## What Recall is intended to provide
 
-- Persistent memories scoped by user and application.
+- Persistent memories scoped by application (`appId`) in a single-user deployment.
 - Semantic search over stored memories using vector embeddings.
 - Fact extraction and duplicate/contradiction handling.
 - `GET /v1/health` for service health checks.
