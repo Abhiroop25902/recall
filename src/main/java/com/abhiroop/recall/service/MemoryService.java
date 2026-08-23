@@ -3,6 +3,7 @@ package com.abhiroop.recall.service;
 import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
+import com.google.cloud.Timestamp;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,8 @@ public class MemoryService {
                         .builder()
                         .appId(dto.appId())
                         .text(dto.text())
+                        .createdAt(Timestamp.now())
+                        //TODO: create embedding
                         .build()
         );
     }
