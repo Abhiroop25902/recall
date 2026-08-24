@@ -20,7 +20,7 @@
 
 ## Product target
 
-Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore and vector search. Gemini/Vertex AI will provide embeddings and fact extraction; Cloud Run is the deployment target.
+Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates an embedding when a memory is saved; vector search and fact extraction remain pending. Cloud Run is the deployment target.
 
 ## Deployment security
 
@@ -34,8 +34,8 @@ Recall is a cloud-hosted memory service for coding agents. It exposes a versione
 ## Memory model
 
 Each Firestore document represents one memory in the `memories/{id}` collection. The `appId` field is required and
-identifies the folder namespace. A memory contains its text, a Firestore `VectorValue` embedding, and its creation
-timestamp. Changes are handled by deleting the old document and creating a replacement; in-place updates and
+identifies the folder namespace. A memory contains its text, a Firestore `VectorValue` embedding generated at creation,
+and its creation timestamp. Changes are handled by deleting the old document and creating a replacement; in-place updates and
 `updatedAt` are intentionally not supported. Repository saves are create-only and cannot overwrite an existing ID.
 
 ## Planned module layout

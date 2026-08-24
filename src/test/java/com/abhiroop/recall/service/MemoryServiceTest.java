@@ -4,25 +4,32 @@ import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.embedding.EmbeddingModel;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MemoryServiceTest {
 
     @Test
     void saveMemoryMapsDtoAndDelegatesToRepository() {
         var repository = new FakeMemoryRepository();
-        var service = new MemoryService(repository);
+        var embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModel.embed("text")).thenReturn(new float[]{0.1f, 0.2f});
+        var service = new MemoryService(repository, embeddingModel);
 
         Memory saved = service.saveMemory(new SaveMemoryRequestDto("app", "text"));
 
         assertEquals("persisted-id", saved.id());
         assertEquals("app", repository.saved.appId());
         assertEquals("text", repository.saved.text());
+        assertArrayEquals(new double[]{0.1, 0.2}, repository.saved.embedding().toArray(), 0.000001);
     }
 
     @Test
@@ -30,7 +37,7 @@ class MemoryServiceTest {
         var repository = new FakeMemoryRepository();
         var expected = List.of(new Memory(null, "app", "text", null, null));
         repository.memories = expected;
-        var service = new MemoryService(repository);
+        var service = new MemoryService(repository, mock(EmbeddingModel.class));
 
         assertSame(expected, service.getMemories("app"));
         assertEquals("app", repository.requestedAppId);
@@ -39,7 +46,7 @@ class MemoryServiceTest {
     @Test
     void deleteMemoryDelegatesToRepository() {
         var repository = new FakeMemoryRepository();
-        var service = new MemoryService(repository);
+        var service = new MemoryService(repository, mock(EmbeddingModel.class));
 
         service.deleteMemory("memory-id");
 

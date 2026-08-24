@@ -4,7 +4,7 @@
 
 - Act as a practical coding helper while the user writes the application.
 - Refresh Spring Boot knowledge at the point it is useful: explain the relevant concept, why it matters here, and the smallest safe next step. Keep explanations concise unless the user asks to go deeper.
-- Preserve the current stack unless the user explicitly asks to change it: Gradle, Java 25, Spring Boot 4.0.7, `com.abhiroop.recall`, and `application.properties`.
+- Preserve the current stack unless the user explicitly asks to change it: Gradle, Java 25, Spring Boot 4.1.1, `com.abhiroop.recall`, and `application.properties`.
 - Prefer incremental, reviewable changes. Before declaring work complete, run the most relevant verification available and state anything that could not be verified.
 - Plan non-trivial work by delegating appropriate tasks to subagents; use direct tools for focused reads, edits, coordination, and final checks.
 

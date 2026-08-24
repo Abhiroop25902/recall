@@ -14,7 +14,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 3: Stateless MCP server & CRUD tools — implementation and Firestore-backed CRUD verification complete.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [ ] Day 5: Firestore vector similarity search
-- [ ] Day 6: Gemini text embeddings client
+- [ ] Day 6: Gemini text embeddings client (save-time generation complete; query generation pending)
 - [ ] Day 7: Gemini fact extraction & deduplication
 - [ ] Day 8: OpenCode integration & cross-device verification
 
@@ -108,6 +108,8 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 **Goal:** Implement scoped vector similarity search using Firestore native vector queries.
 
+Save-time embedding generation is complete as a prerequisite; query embedding generation remains part of Day 6.
+
 - [ ] **Task 5.1: Repository contract**
     - Add `searchSimilar(String appId, List<Double> queryVector, int topK, double threshold)`.
 - [ ] **Task 5.2: Firestore query**
@@ -123,13 +125,15 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 **Goal:** Convert memory text and search queries into embeddings.
 
-- [ ] **Task 6.1: Gemini client**
-    - Add `llm/GeminiClient.java` using Spring `RestClient` or the Google GenAI SDK.
-- [ ] **Task 6.2: Embedding service**
-    - Add `embedText(String text)` and `batchEmbedText(List<String> texts)`.
+- [x] **Task 6.1: Spring AI Gemini embedding model**
+    - Configure the Google GenAI embedding starter with the project, location, and model.
+- [x] **Task 6.2: Save-time embedding creation**
+    - Generate an embedding for each `saveMemory` request and persist it as a Firestore `VectorValue`.
 - [ ] **Task 6.3: Search integration**
     - Combine embedding generation and vector search in `MemoryService.search(...)`.
-- [ ] **Verification**
+- [x] **Verification**
+    - Unit test embedding-to-Firestore-vector conversion during memory creation.
+- [ ] **Live verification**
     - Confirm an embedding request returns the expected vector dimensionality for the selected model.
 
 ---
