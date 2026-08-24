@@ -117,7 +117,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [ ] **Task 5.3: Result mapping**
     - Add `MemorySearchResult` and filter results below the requested threshold.
 - [ ] **Verification**
-    - Query with a dummy 768-dimensional vector and confirm scoped, ranked results.
+    - Query with a dummy 1536-dimensional vector and confirm scoped, ranked results.
 
 ---
 
@@ -126,7 +126,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 **Goal:** Convert memory text and search queries into embeddings.
 
 - [x] **Task 6.1: Spring AI Gemini embedding model**
-    - Configure the Google GenAI embedding starter with the project, location, and model.
+    - Configure the Google GenAI embedding starter with the project, global location, model, and 1536 output dimensions.
 - [x] **Task 6.2: Save-time embedding creation**
     - Generate an embedding for each `saveMemory` request and persist it as a Firestore `VectorValue`.
 - [ ] **Task 6.3: Search integration**
@@ -134,7 +134,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Verification**
     - Unit test embedding-to-Firestore-vector conversion during memory creation.
 - [ ] **Live verification**
-    - Confirm an embedding request returns the expected vector dimensionality for the selected model.
+    - Confirm an embedding request returns the configured 1536-dimensional vector for the selected model.
 
 ---
 
