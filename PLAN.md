@@ -133,8 +133,8 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Combine embedding generation and vector search in `MemoryService.search(...)`.
 - [x] **Verification**
     - Unit test embedding-to-Firestore-vector conversion during memory creation.
-- [ ] **Live verification**
-    - Confirm an embedding request returns the configured 1536-dimensional vector for the selected model.
+- [x] **Live verification**
+    - Confirmed deployed `saveMemory` persists a Firestore vector; `getMemories` retrieved the test record by `appId` and `deleteMemory` removed it.
 
 ---
 

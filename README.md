@@ -33,7 +33,7 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 
 - Gradle
 - Java 25
-- Spring Boot 4.0.7
+- Spring Boot 4.1.1
 - Base package: `com.abhiroop.recall`
 - Configuration: `application.properties`
 
@@ -48,7 +48,7 @@ The local service exposes:
 
 Memory operations are currently exposed through MCP tools rather than custom REST endpoints.
 
-Cloud Run deployment will use one Secret Manager-backed `RECALL_API_KEY` and require this header for `/v1/mcp`:
+Cloud Run uses one Secret Manager-backed `RECALL_API_KEY` and requires this header for `/v1/mcp`:
 
 ```http
 Authorization: Bearer <RECALL_API_KEY>
