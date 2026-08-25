@@ -13,10 +13,11 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 2: Domain model & Firestore configuration — implementation and Firestore CRUD verification complete.
 - [x] Day 3: Stateless MCP server & CRUD tools — implementation and Firestore-backed CRUD verification complete.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
-- [ ] Day 5: Firestore vector similarity search
+- [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [ ] Day 7: Gemini fact extraction & deduplication
 - [ ] Day 8: OpenCode integration & cross-device verification
+- [ ] Day 9: Post-MVP Google Cloud setup guide
 
 ---
 
@@ -114,14 +115,17 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Add app-scoped memory counting and nearest-neighbor retrieval with a `VectorValue` query embedding and `topN` limit.
 - [x] **Task 5.2: Firestore query**
     - Filter by `appId` before the Firestore nearest-neighbor query and rank by cosine distance.
+    - Provision the required composite index: ascending `appId` plus a 1536-dimensional flat vector index on `embedding`.
 - [x] **Task 5.3: Result mapping**
     - Project the document ID, app ID, text, and creation time; exclude stored embeddings from retrieval results.
 - [ ] **Task 5.4: Threshold filtering**
     - Add an explicit similarity threshold when the retrieval consumer needs one.
 - [x] **Unit verification**
     - Cover empty namespaces, bounds validation, query embedding normalization, and repository delegation in `MemoryServiceTest`.
-- [ ] **Live verification**
-    - Query a configured Firestore project with a dummy 1536-dimensional vector and confirm scoped, ranked results.
+- [x] **Live verification**
+    - Saved five app-A records and a closer app-B control using `$RECALL_API_KEY`; scoped top-three retrieval returned relevant app-A records and excluded the app-B record.
+    - Baseline read was 156 ms; median save was 539 ms, warm-save mean was 530 ms, and top-three retrieval was 534 ms.
+    - Retain synchronous embedding generation; reconsider deferred embeddings only if live save latency materially exceeds this baseline.
 
 ---
 
@@ -166,6 +170,17 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Document the deployed `/v1/mcp` URL and authentication setup without committing credentials.
 - [ ] **Task 8.2: End-to-end verification**
     - Store a memory from one client and retrieve it from another environment.
+
+---
+
+## Day 9: Post-MVP Google Cloud Setup Guide
+
+**Goal:** After MVP completion, document how to provision a new Google Cloud project for Recall.
+
+- [ ] **Task 9.1: Setup guide**
+    - Cover project and billing setup, required APIs, Firestore Native mode, the composite vector index, Secret Manager, IAM, Cloud Build, Cloud Run, and MCP verification.
+- [ ] **Verification**
+    - Validate the guide by provisioning a separate project without committing credentials.
 
 ## Completion criteria
 

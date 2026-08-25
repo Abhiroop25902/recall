@@ -35,6 +35,9 @@
 - The Cloud Run runtime service account needs `roles/secretmanager.secretAccessor` on the `RECALL_API_KEY` secret and `roles/datastore.user` for Firestore. The deployer, not the runtime service account, needs `roles/iam.serviceAccountUser` to attach it.
 - Embedding inference requires the Agent Platform API (`aiplatform.googleapis.com`) and `roles/aiplatform.user` (displayed as Agent Platform User) on the Cloud Run runtime service account.
 - Tests must disable `spring.config.import` and provide a local `sm@RECALL_API_KEY` value so they never call Google Cloud.
+- Scoped vector retrieval requires a Firestore composite index with ascending `appId` and a 1536-dimensional flat vector index on `embedding`.
+- For live MCP tests, authenticate with the locally injected `$RECALL_API_KEY`, not a `gcloud` secret lookup; use unique temporary app IDs, verify cross-app isolation, then delete and verify cleanup of all test records.
+- Keep embedding generation synchronous. Reconsider deferred embeddings only when live save latency materially exceeds the current 530 ms warm-save baseline.
 
 ## graphify
 
