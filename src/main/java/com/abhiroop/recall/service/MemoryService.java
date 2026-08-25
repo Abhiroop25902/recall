@@ -3,6 +3,7 @@ package com.abhiroop.recall.service;
 import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
+import com.abhiroop.recall.utils.EmbeddingUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.VectorValue;
@@ -31,8 +32,11 @@ public class MemoryService {
     Memory saveMemory(SaveMemoryRequestDto dto) {
         final float[] embedding = embeddingModel.embed(dto.text());
 
+        //default 3072 is pre normalized, but we are using 1536 -> so the embedding must be normalized
+        final float[] normalizedEmbedding = EmbeddingUtils.normalize(embedding);
+
         final VectorValue embeddingVector = FieldValue.vector(
-                Doubles.toArray(Floats.asList(embedding))
+                Doubles.toArray(Floats.asList(normalizedEmbedding))
         );
 
         final var memory = Memory

@@ -29,7 +29,7 @@ class MemoryServiceTest {
         assertEquals("persisted-id", saved.id());
         assertEquals("app", repository.saved.appId());
         assertEquals("text", repository.saved.text());
-        assertArrayEquals(new double[]{0.1, 0.2}, repository.saved.embedding().toArray(), 0.000001);
+        assertArrayEquals(new double[]{0.4472136, 0.8944272}, repository.saved.embedding().toArray(), 0.000001);
     }
 
     @Test

@@ -128,7 +128,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 6.1: Spring AI Gemini embedding model**
     - Configure the Google GenAI embedding starter with the project, global location, model, and 1536 output dimensions.
 - [x] **Task 6.2: Save-time embedding creation**
-    - Generate an embedding for each `saveMemory` request and persist it as a Firestore `VectorValue`.
+    - Generate and L2-normalize an embedding for each `saveMemory` request before persisting it as a Firestore `VectorValue`.
 - [ ] **Task 6.3: Search integration**
     - Combine embedding generation and vector search in `MemoryService.search(...)`.
 - [x] **Verification**
