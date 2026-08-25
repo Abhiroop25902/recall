@@ -1,17 +1,19 @@
 package com.abhiroop.recall.repository;
 
 import com.abhiroop.recall.entity.Memory;
+import com.google.cloud.firestore.VectorValue;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MemoryRepository {
 
     Memory save(Memory memory);
 
-    Optional<Memory> findById(String id);
-
     void deleteById(String id);
 
     List<Memory> findByAppId(String appId);
+
+    Long findCountByAppId(String appId);
+
+    List<Memory> findNearestN(String appId, VectorValue embedding, int topN);
 }

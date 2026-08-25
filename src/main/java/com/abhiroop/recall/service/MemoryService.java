@@ -32,7 +32,6 @@ public class MemoryService {
     Memory saveMemory(SaveMemoryRequestDto dto) {
         final float[] embedding = embeddingModel.embed(dto.text());
 
-        //default 3072 is pre normalized, but we are using 1536 -> so the embedding must be normalized
         final float[] normalizedEmbedding = EmbeddingUtils.normalize(embedding);
 
         final VectorValue embeddingVector = FieldValue.vector(
@@ -59,5 +58,26 @@ public class MemoryService {
     @Tool(description = "Delete a memory by id")
     void deleteMemory(String id) {
         memoryRepository.deleteById(id);
+    }
+
+    @Tool(description = "Get top n closest memories")
+    List<Memory> getTopNClosest(String appId, String text, int topN) {
+        if (topN == 0) return List.of();
+
+        if (topN < 0 || topN > 1000)
+            throw new IllegalArgumentException("topN must be between 1 and 1000");
+
+        //avoid generating embedding and doing similarity search if no memory with given appId exists
+        final var appIdMemoryCount = memoryRepository.findCountByAppId(appId);
+
+        if (appIdMemoryCount == 0) return List.of();
+
+        final VectorValue embeddingVector = FieldValue.vector(
+                Doubles.toArray(Floats.asList(
+                        EmbeddingUtils.normalize(embeddingModel.embed(text))
+                ))
+        );
+
+        return memoryRepository.findNearestN(appId, embeddingVector, topN);
     }
 }

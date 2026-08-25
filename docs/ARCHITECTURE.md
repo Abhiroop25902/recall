@@ -20,7 +20,7 @@
 
 ## Product target
 
-Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates an embedding when a memory is saved; vector search and fact extraction remain pending. Cloud Run is the deployment target.
+Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries; fact extraction remains pending. Cloud Run is the deployment target.
 
 ## Deployment security
 
@@ -37,6 +37,12 @@ Each Firestore document represents one memory in the `memories/{id}` collection.
 identifies the folder namespace. A memory contains its text, a 1536-dimensional L2-normalized Firestore `VectorValue` embedding generated
 at creation, and its creation timestamp. Changes are handled by deleting the old document and creating a replacement; in-place updates and
 `updatedAt` are intentionally not supported. Repository saves are create-only and cannot overwrite an existing ID.
+
+`getTopNClosest(appId, text, topN)` is the MCP retrieval tool. It returns an empty result for `topN == 0`, rejects
+values outside `0..1000`, and checks the app namespace before paying for query embedding inference. For non-empty
+namespaces, the service creates an L2-normalized query embedding and queries Firestore with an `appId` equality filter
+and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
+stored embedding from MCP responses.
 
 ## Planned module layout
 

@@ -5,6 +5,13 @@ public class EmbeddingUtils {
         /* This utility class should not be instantiated */
     }
 
+    /**
+     * default 3072 from gemini-embedding-2 is normalized, but we are using 1536 it's a recommended below 2048 (firestore vector limit)
+     * so the embedding must be normalized
+     *
+     * @param embedding the embedding float array to normalize
+     * @return normalized embedding, same length as given embedding
+     */
     public static float[] normalize(float[] embedding) {
         if (embedding.length == 0) {
             throw new IllegalArgumentException("Embedding is empty");
@@ -22,7 +29,7 @@ public class EmbeddingUtils {
             throw new IllegalArgumentException("L2 Norm is Zero");
         }
 
-        if(l2Norm == 1) return embedding;
+        if (l2Norm == 1) return embedding;
 
         final float[] ret = new float[embedding.length];
 

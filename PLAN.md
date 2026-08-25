@@ -14,7 +14,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 3: Stateless MCP server & CRUD tools — implementation and Firestore-backed CRUD verification complete.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [ ] Day 5: Firestore vector similarity search
-- [ ] Day 6: Gemini text embeddings client (save-time generation complete; query generation pending)
+- [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [ ] Day 7: Gemini fact extraction & deduplication
 - [ ] Day 8: OpenCode integration & cross-device verification
 
@@ -108,16 +108,20 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 **Goal:** Implement scoped vector similarity search using Firestore native vector queries.
 
-Save-time embedding generation is complete as a prerequisite; query embedding generation remains part of Day 6.
+Save-time embedding generation is complete as a prerequisite; query embedding generation is provided by Day 6.
 
-- [ ] **Task 5.1: Repository contract**
-    - Add `searchSimilar(String appId, List<Double> queryVector, int topK, double threshold)`.
-- [ ] **Task 5.2: Firestore query**
-    - Use the `appId` filter before the nearest-neighbor query and rank by cosine distance.
-- [ ] **Task 5.3: Result mapping**
-    - Add `MemorySearchResult` and filter results below the requested threshold.
-- [ ] **Verification**
-    - Query with a dummy 1536-dimensional vector and confirm scoped, ranked results.
+- [x] **Task 5.1: Repository contract**
+    - Add app-scoped memory counting and nearest-neighbor retrieval with a `VectorValue` query embedding and `topN` limit.
+- [x] **Task 5.2: Firestore query**
+    - Filter by `appId` before the Firestore nearest-neighbor query and rank by cosine distance.
+- [x] **Task 5.3: Result mapping**
+    - Project the document ID, app ID, text, and creation time; exclude stored embeddings from retrieval results.
+- [ ] **Task 5.4: Threshold filtering**
+    - Add an explicit similarity threshold when the retrieval consumer needs one.
+- [x] **Unit verification**
+    - Cover empty namespaces, bounds validation, query embedding normalization, and repository delegation in `MemoryServiceTest`.
+- [ ] **Live verification**
+    - Query a configured Firestore project with a dummy 1536-dimensional vector and confirm scoped, ranked results.
 
 ---
 
@@ -129,10 +133,11 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Configure the Google GenAI embedding starter with the project, global location, model, and 1536 output dimensions.
 - [x] **Task 6.2: Save-time embedding creation**
     - Generate and L2-normalize an embedding for each `saveMemory` request before persisting it as a Firestore `VectorValue`.
-- [ ] **Task 6.3: Search integration**
-    - Combine embedding generation and vector search in `MemoryService.search(...)`.
+- [x] **Task 6.3: Search integration**
+    - Generate and normalize a query embedding in `MemoryService.getTopNClosest(...)` before scoped vector retrieval.
 - [x] **Verification**
     - Unit test embedding-to-Firestore-vector conversion during memory creation.
+    - Unit test query embedding generation and vector retrieval delegation.
 - [x] **Live verification**
     - Confirmed deployed `saveMemory` persists a Firestore vector; `getMemories` retrieved the test record by `appId` and `deleteMemory` removed it.
 
