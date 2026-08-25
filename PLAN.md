@@ -147,7 +147,24 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 7: Gemini Fact Extraction & Deduplication
+## Day 7: Singapore Regional Migration & Custom Domain
+
+**Goal:** Move the empty Recall data and runtime to `asia-southeast1`, then serve it at `recall.abhiroop.dev`.
+
+- [ ] Confirm no clients can write to the existing Mumbai deployment during migration.
+- [ ] Delete the empty Mumbai default Firestore Native database and recreate the default database in `asia-southeast1`.
+- [ ] Recreate the required Firestore index: ascending `appId` plus a 1536-dimensional flat vector index on `embedding`.
+- [ ] Update the external Cloud Build deployment configuration to deploy Recall to `asia-southeast1`.
+- [ ] Verify public health, MCP authentication, save, scoped vector search, cross-app isolation, and cleanup against the Singapore deployment.
+- [ ] Verify live save/search latency; Vertex AI embeddings remain configured at `global`.
+- [ ] Verify ownership of `abhiroop.dev`, map `recall.abhiroop.dev` to the Singapore Cloud Run service, and add the Cloud Run-provided DNS records.
+- [ ] Verify managed TLS and authenticated MCP access at `https://recall.abhiroop.dev/v1/mcp`.
+- [ ] Update deployed-URL documentation and MCP client configuration.
+- [ ] Retire the Mumbai Cloud Run service after the custom domain works reliably.
+
+---
+
+## Day 8: Gemini Fact Extraction & Deduplication
 
 **Goal:** Extract atomic facts and resolve duplicates or contradictions.
 
@@ -162,7 +179,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 8: OpenCode Integration & Cross-Device Verification
+## Day 9: OpenCode Integration & Cross-Device Verification
 
 **Goal:** Connect coding agents to the deployed memory service.
 
@@ -173,7 +190,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 9: Post-MVP Google Cloud Setup Guide
+## Day 10: Post-MVP Google Cloud Setup Guide
 
 **Goal:** After MVP completion, document how to provision a new Google Cloud project for Recall.
 
