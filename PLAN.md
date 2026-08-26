@@ -15,7 +15,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
-- [ ] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP verification complete. Pending latency measurement and custom-domain TLS verification.
+- [ ] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, and custom-domain TLS verification complete. Pending deployed-URL documentation and Mumbai retirement.
 - [ ] Day 8: Gemini fact extraction & deduplication
 - [ ] Day 9: OpenCode integration & cross-device verification
 - [ ] Day 10: Post-MVP Google Cloud setup guide
@@ -158,9 +158,12 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] Update the external Cloud Build deployment configuration to deploy Recall to `asia-southeast1`.
 - [x] Verify public health, MCP authentication, save, scoped vector search, cross-app isolation, and cleanup against the Singapore deployment.
   - Verified `https://recall-768264222351.asia-southeast1.run.app`: authenticated MCP initialization and tool discovery passed; five records in a temporary namespace returned a relevant top-three result while an identical sixth record in a separate namespace was excluded. All six test records were deleted and both namespaces were confirmed empty.
-- [ ] Verify live save/search latency; Vertex AI embeddings remain configured at `global`.
-- [ ] Verify ownership of `abhiroop.dev`, map `recall.abhiroop.dev` to the Singapore Cloud Run service, and add the Cloud Run-provided DNS records.
-- [ ] Verify managed TLS and authenticated MCP access at `https://recall.abhiroop.dev/v1/mcp`.
+- [x] Verify live save/search latency; Vertex AI embeddings remain configured at `global`.
+  - Custom-domain run: first save was 3.104 s; the following five saves averaged 917 ms (median 938 ms), and scoped top-three retrieval took 1.057 s. DNS resolution is cached and does not explain per-request latency; the measured round trip includes client network, Cloud Run, embedding, and Firestore work.
+  - Follow-up warm benchmark: 30 saves had a 609 ms p50, 733 ms p95, and 891 ms p99; 30 scoped top-one retrievals had a 609 ms p50, 917 ms p95, and 1.003 s p99. All 66 calls succeeded, and all 36 temporary records were deleted and verified absent. Mean DNS lookup was 3 ms; mean TLS setup was 168-175 ms, while the remaining time to first byte includes Cloud Run, embedding, and Firestore work.
+  - Repeat with `scripts/live-mcp-benchmark.sh`, which records client timing phases and cleans up only IDs created by its unique test namespaces.
+- [x] Verify ownership of `abhiroop.dev`, map `recall.abhiroop.dev` to the Singapore Cloud Run service, and add the Cloud Run-provided DNS records.
+- [x] Verify managed TLS and authenticated MCP access at `https://recall.abhiroop.dev/v1/mcp`.
 - [ ] Update deployed-URL documentation and MCP client configuration.
 - [ ] Retire the Mumbai Cloud Run service after the custom domain works reliably.
 

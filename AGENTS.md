@@ -37,7 +37,7 @@
 - Tests must disable `spring.config.import` and provide a local `sm@RECALL_API_KEY` value so they never call Google Cloud.
 - Scoped vector retrieval requires a Firestore composite index with ascending `appId` and a 1536-dimensional flat vector index on `embedding`.
 - For live MCP tests, authenticate with the locally injected `$RECALL_API_KEY`, not a `gcloud` secret lookup; use unique temporary app IDs, verify cross-app isolation, then delete and verify cleanup of all test records.
-- Keep embedding generation synchronous. Reconsider deferred embeddings only when live save latency materially exceeds the current 530 ms warm-save baseline.
+- Keep embedding generation synchronous. The Hyderabad-to-Singapore custom-domain benchmark had 609 ms save p50, 733 ms save p95, 609 ms retrieval p50, and 917 ms retrieval p95; reconsider deferred embeddings only if real-use p95 exceeds 2 s or errors appear.
 
 ## graphify
 
