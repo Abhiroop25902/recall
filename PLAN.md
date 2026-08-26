@@ -15,9 +15,10 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
-- [ ] Day 7: Gemini fact extraction & deduplication
-- [ ] Day 8: OpenCode integration & cross-device verification
-- [ ] Day 9: Post-MVP Google Cloud setup guide
+- [ ] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP verification complete. Pending latency measurement and custom-domain TLS verification.
+- [ ] Day 8: Gemini fact extraction & deduplication
+- [ ] Day 9: OpenCode integration & cross-device verification
+- [ ] Day 10: Post-MVP Google Cloud setup guide
 
 ---
 
@@ -152,10 +153,11 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 **Goal:** Move the empty Recall data and runtime to `asia-southeast1`, then serve it at `recall.abhiroop.dev`.
 
 - [ ] Confirm no clients can write to the existing Mumbai deployment during migration.
-- [ ] Delete the empty Mumbai default Firestore Native database and recreate the default database in `asia-southeast1`.
-- [ ] Recreate the required Firestore index: ascending `appId` plus a 1536-dimensional flat vector index on `embedding`.
-- [ ] Update the external Cloud Build deployment configuration to deploy Recall to `asia-southeast1`.
-- [ ] Verify public health, MCP authentication, save, scoped vector search, cross-app isolation, and cleanup against the Singapore deployment.
+- [x] Delete the empty Mumbai default Firestore Native database and recreate the default database in `asia-southeast1`.
+- [x] Recreate the required Firestore index: ascending `appId` plus a 1536-dimensional flat vector index on `embedding`.
+- [x] Update the external Cloud Build deployment configuration to deploy Recall to `asia-southeast1`.
+- [x] Verify public health, MCP authentication, save, scoped vector search, cross-app isolation, and cleanup against the Singapore deployment.
+  - Verified `https://recall-768264222351.asia-southeast1.run.app`: authenticated MCP initialization and tool discovery passed; five records in a temporary namespace returned a relevant top-three result while an identical sixth record in a separate namespace was excluded. All six test records were deleted and both namespaces were confirmed empty.
 - [ ] Verify live save/search latency; Vertex AI embeddings remain configured at `global`.
 - [ ] Verify ownership of `abhiroop.dev`, map `recall.abhiroop.dev` to the Singapore Cloud Run service, and add the Cloud Run-provided DNS records.
 - [ ] Verify managed TLS and authenticated MCP access at `https://recall.abhiroop.dev/v1/mcp`.
