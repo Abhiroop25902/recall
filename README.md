@@ -24,7 +24,7 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 
 - Persistent memories scoped by application (`appId`) in a single-user deployment.
 - Semantic search over stored memories using vector embeddings.
-- OpenCode-managed proposed-save consolidation: duplicate and contradiction handling using scoped semantic retrieval.
+- MCP-guided proposed-save consolidation: clients handle duplicates and contradictions using scoped semantic retrieval.
 - `GET /v1/health` for service health checks.
 - MCP-compatible memory tools at `/v1/mcp`.
 - Google Cloud Firestore persistence and Google Cloud Run deployment.
@@ -45,8 +45,10 @@ The local service exposes:
 
 - Health: `http://localhost:8080/v1/health`
 - MCP: `http://localhost:8080/v1/mcp`
+- Deployed MCP: `https://recall.abhiroop.dev/v1/mcp`
 
 Memory operations are currently exposed through MCP tools rather than custom REST endpoints.
+Day 8 will publish harness-neutral proposed-save guidance through MCP initialization; client-specific skills are optional reinforcement.
 
 Cloud Run uses one Secret Manager-backed `RECALL_API_KEY` and requires this header for `/v1/mcp`:
 

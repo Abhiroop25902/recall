@@ -3,7 +3,7 @@
 This file tracks implementation work. The current architecture and package layout live
 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 guidance live in [AGENTS.md](AGENTS.md).
 
-Recall's application interface is a stateless Streamable HTTP MCP server for OpenCode. There is no custom REST memory API;
+Recall's application interface is a stateless Streamable HTTP MCP server for coding agents. There is no custom REST memory API;
 the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 
 ## Progress
@@ -169,18 +169,22 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 8: OpenCode Proposed-Save Consolidation
+## Day 8: MCP Usage Guidance & Harness Consolidation
 
-**Goal:** Keep each application's memories useful without a backend fact-extraction pipeline or periodic cleanup job.
+**Goal:** Publish a harness-neutral proposed-save contract through MCP, then verify it with OpenCode without adding a backend fact-extraction pipeline or periodic cleanup job.
 
-- [ ] **Task 7.1: Proposed-save workflow**
-    - Configure OpenCode to select durable candidate facts before saving and retrieve the scoped top 5-10 comparable memories with `getTopNClosest`.
-- [ ] **Task 7.2: Client-side decision**
-    - Have OpenCode choose ADD, NOOP, or delete-then-create replacement using the retrieved candidates.
-    - Delete only when a duplicate or contradiction is clear; preserve separate memories when uncertain.
-- [ ] **Task 7.3: Existing MCP primitives**
+- [ ] **Task 8.1: MCP usage guidance**
+    - Publish a harness-neutral "how to use Recall" contract through the MCP `initialize` instructions.
+    - Require clients to select durable candidate facts, retrieve the scoped top 5-10 comparable memories with `getTopNClosest`, then choose ADD, NOOP, or delete-then-create replacement.
+    - Treat only clear duplicates or contradictions as grounds for NOOP or replacement; preserve separate memories when uncertain and never save secrets or credentials.
+    - Do not add a separate guidance tool, prompt, or resource unless client testing shows the initialization instructions are insufficient.
+- [ ] **Task 8.2: Existing MCP primitives**
     - Use the existing `saveMemory` and `deleteMemory` tools; do not add backend fact extraction, a Cloud Run Job, or periodic full-namespace cleanup.
+- [ ] **Task 8.3: OpenCode harness test**
+    - Add a project-local OpenCode MCP configuration for the deployed endpoint without committing credentials.
+    - Confirm OpenCode discovers the server guidance and applies the proposed-save contract.
 - [ ] **Verification**
+    - Verify an authenticated MCP `initialize` response contains the published guidance.
     - From OpenCode, verify duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
 
 ---
@@ -189,9 +193,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Connect coding agents to the deployed memory service.
 
-- [ ] **Task 8.1: MCP client configuration**
+- [ ] **Task 9.1: MCP client configuration**
     - Document the deployed `/v1/mcp` URL, authentication setup, and proposed-save consolidation instruction without committing credentials.
-- [ ] **Task 8.2: End-to-end verification**
+- [ ] **Task 9.2: End-to-end verification**
     - Store a memory from one client and retrieve it from another environment.
 
 ---
