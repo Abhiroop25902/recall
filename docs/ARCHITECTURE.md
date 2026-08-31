@@ -21,7 +21,7 @@
 
 ## Product target
 
-Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries; fact extraction remains pending. Cloud Run is the deployment target.
+Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries. Recall provides storage, scoped retrieval, save, and delete primitives; OpenCode decides which durable facts to save and resolves duplicates or contradictions before writing. Cloud Run is the deployment target.
 
 ## Deployment security
 
@@ -44,6 +44,10 @@ values outside `0..1000`, and checks the app namespace before paying for query e
 namespaces, the service creates an L2-normalized query embedding and queries Firestore with an `appId` equality filter
 and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
 stored embedding from MCP responses.
+
+Before a proposed save, OpenCode retrieves the top 5-10 scoped candidates and decides whether to add the memory, skip
+an obvious duplicate, or delete and replace a clearly stale memory. Recall deliberately does not run a backend
+fact-extraction pipeline, scheduled Cloud Run Job, or periodic full-namespace consolidation pass.
 
 ## Planned module layout
 

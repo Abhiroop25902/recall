@@ -24,7 +24,7 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 
 - Persistent memories scoped by application (`appId`) in a single-user deployment.
 - Semantic search over stored memories using vector embeddings.
-- Fact extraction and duplicate/contradiction handling.
+- OpenCode-managed proposed-save consolidation: duplicate and contradiction handling using scoped semantic retrieval.
 - `GET /v1/health` for service health checks.
 - MCP-compatible memory tools at `/v1/mcp`.
 - Google Cloud Firestore persistence and Google Cloud Run deployment.

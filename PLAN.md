@@ -16,7 +16,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
-- [ ] Day 8: Gemini fact extraction & deduplication
+- [ ] Day 8: OpenCode proposed-save consolidation
 - [ ] Day 9: OpenCode integration & cross-device verification
 - [ ] Day 10: Post-MVP Google Cloud setup guide
 
@@ -169,18 +169,19 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 8: Gemini Fact Extraction & Deduplication
+## Day 8: OpenCode Proposed-Save Consolidation
 
-**Goal:** Extract atomic facts and resolve duplicates or contradictions.
+**Goal:** Keep each application's memories useful without a backend fact-extraction pipeline or periodic cleanup job.
 
-- [ ] **Task 7.1: Extraction contract**
-    - Add an `ExtractedFact` record and prompt template for category, text, and confidence.
-- [ ] **Task 7.2: LLM extraction**
-    - Implement structured JSON fact extraction in `GeminiClient`.
-- [ ] **Task 7.3: Memory engine**
-    - Search comparable memories, choose ADD, DELETE, or NOOP; replace stale memories with delete then create.
+- [ ] **Task 7.1: Proposed-save workflow**
+    - Configure OpenCode to select durable candidate facts before saving and retrieve the scoped top 5-10 comparable memories with `getTopNClosest`.
+- [ ] **Task 7.2: Client-side decision**
+    - Have OpenCode choose ADD, NOOP, or delete-then-create replacement using the retrieved candidates.
+    - Delete only when a duplicate or contradiction is clear; preserve separate memories when uncertain.
+- [ ] **Task 7.3: Existing MCP primitives**
+    - Use the existing `saveMemory` and `deleteMemory` tools; do not add backend fact extraction, a Cloud Run Job, or periodic full-namespace cleanup.
 - [ ] **Verification**
-    - Process a multi-turn conversation and confirm clean fact storage without duplicates.
+    - From OpenCode, verify duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
 
 ---
 
@@ -189,7 +190,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 **Goal:** Connect coding agents to the deployed memory service.
 
 - [ ] **Task 8.1: MCP client configuration**
-    - Document the deployed `/v1/mcp` URL and authentication setup without committing credentials.
+    - Document the deployed `/v1/mcp` URL, authentication setup, and proposed-save consolidation instruction without committing credentials.
 - [ ] **Task 8.2: End-to-end verification**
     - Store a memory from one client and retrieve it from another environment.
 
