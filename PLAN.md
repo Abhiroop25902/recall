@@ -15,7 +15,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 4: Cloud Run deployment — Cloud Build GitHub trigger and deployed service verification complete.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
-- [ ] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, and custom-domain TLS verification complete. Pending deployed-URL documentation and Mumbai retirement.
+- [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
 - [ ] Day 8: Gemini fact extraction & deduplication
 - [ ] Day 9: OpenCode integration & cross-device verification
 - [ ] Day 10: Post-MVP Google Cloud setup guide
@@ -152,7 +152,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Move the empty Recall data and runtime to `asia-southeast1`, then serve it at `recall.abhiroop.dev`.
 
-- [ ] Confirm no clients can write to the existing Mumbai deployment during migration.
+- [x] Confirm no clients can write to the existing Mumbai deployment during migration; the Mumbai Firestore database and Cloud Run service have been deleted.
 - [x] Delete the empty Mumbai default Firestore Native database and recreate the default database in `asia-southeast1`.
 - [x] Recreate the required Firestore index: ascending `appId` plus a 1536-dimensional flat vector index on `embedding`.
 - [x] Update the external Cloud Build deployment configuration to deploy Recall to `asia-southeast1`.
@@ -164,8 +164,8 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
   - Repeat with `scripts/live-mcp-benchmark.sh`, which records client timing phases and cleans up only IDs created by its unique test namespaces.
 - [x] Verify ownership of `abhiroop.dev`, map `recall.abhiroop.dev` to the Singapore Cloud Run service, and add the Cloud Run-provided DNS records.
 - [x] Verify managed TLS and authenticated MCP access at `https://recall.abhiroop.dev/v1/mcp`.
-- [ ] Update deployed-URL documentation and MCP client configuration.
-- [ ] Retire the Mumbai Cloud Run service after the custom domain works reliably.
+- [x] Update deployed-URL documentation with `https://recall.abhiroop.dev/v1/mcp`; authenticated MCP initialization succeeded at the custom domain.
+- [x] Retire the Mumbai Cloud Run service after the custom domain works reliably.
 
 ---
 

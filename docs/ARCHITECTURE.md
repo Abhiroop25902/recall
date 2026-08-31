@@ -14,6 +14,7 @@
 
 - `GET /v1/health` returns the service health response.
 - `/v1/mcp` is the stateless Streamable HTTP MCP endpoint that exposes memory tools.
+- The deployed MCP endpoint is `https://recall.abhiroop.dev/v1/mcp`.
 - Memory operations currently use MCP tools; there is no custom REST memory API.
 - The `/v1` URL namespace is independent of the MCP protocol version configured by
   `spring.ai.mcp.server.version`.
