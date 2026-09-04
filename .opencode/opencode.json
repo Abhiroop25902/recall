@@ -2,5 +2,15 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     ".opencode/plugins/graphify.js"
-  ]
+  ],
+  "mcp": {
+    "recall": {
+      "type": "remote",
+      "url": "https://recall.abhiroop.dev/v1/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:RECALL_API_KEY}"
+      }
+    }
+  }
 }

@@ -180,16 +180,16 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Do not add a separate guidance tool, prompt, or resource unless client testing shows the initialization instructions are insufficient.
 - [x] **Task 8.2: Existing MCP primitives**
     - Use the existing `saveMemory` and `deleteMemory` tools; do not add backend fact extraction, a Cloud Run Job, or periodic full-namespace cleanup.
-- [ ] **Task 8.3: OpenCode harness test**
+- [x] **Task 8.3: OpenCode harness test**
     - Add a project-local OpenCode MCP configuration for the deployed endpoint without committing credentials.
     - Confirm OpenCode discovers the server guidance and applies the proposed-save contract.
 - [ ] **Task 8.4: Bounded memory listing**
     - Add cursor-based pagination to `getMemories` with a conservative page-size cap and deterministic ordering.
     - Reserve paginated listing for explicit full-project audits and cleanup; use `getTopNClosest` for routine retrieval and consolidation.
     - Update `spring.ai.mcp.server.instructions` after pagination is implemented to direct full-project audits to paginated `getMemories`.
-- [ ] **Verification**
+- [x] **Verification**
     - [x] An authenticated deployed MCP `initialize` response contains the published guidance.
-    - From OpenCode, verify duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
+    - [x] From OpenCode, verified duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
 
 ---
 
