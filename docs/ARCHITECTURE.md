@@ -22,7 +22,7 @@
 
 ## Product target
 
-Recall is a cloud-hosted memory service for coding agents. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries. Recall provides storage, scoped retrieval, save, and delete primitives; each client harness decides which durable facts to save and resolves duplicates or contradictions before writing. Cloud Run is the deployment target.
+Recall is a cloud-hosted memory service for AI agents working on coding and non-coding projects. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries. Recall provides storage, scoped retrieval, save, and delete primitives; each client harness decides which durable facts to save and resolves duplicates or contradictions before writing. Cloud Run is the deployment target.
 
 ## Deployment security
 
@@ -35,10 +35,11 @@ Recall is a cloud-hosted memory service for coding agents. It exposes a versione
 
 ## Memory model
 
-Each Firestore document represents one memory in the `memories/{id}` collection. The `appId` field is required and
-identifies the folder namespace. A memory contains its text, a 1536-dimensional L2-normalized Firestore `VectorValue` embedding generated
-at creation, and its creation timestamp. Changes are handled by deleting the old document and creating a replacement; in-place updates and
-`updatedAt` are intentionally not supported. Repository saves are create-only and cannot overwrite an existing ID.
+Each Firestore document represents one memory in the `memories/{id}` collection. The required `appId` identifies a stable
+project namespace: clients use the repository name for code projects or the folder name for other projects, consistently across agents and
+devices. A memory contains its text, a 1536-dimensional L2-normalized Firestore `VectorValue` embedding generated at creation, and its
+creation timestamp. Changes are handled by deleting the old document and creating a replacement; in-place updates and `updatedAt` are
+intentionally not supported. Repository saves are create-only and cannot overwrite an existing ID.
 
 `getTopNClosest(appId, text, topN)` is the MCP retrieval tool. It returns an empty result for `topN == 0`, rejects
 values outside `0..1000`, and checks the app namespace before paying for query embedding inference. For non-empty
@@ -46,9 +47,12 @@ namespaces, the service creates an L2-normalized query embedding and queries Fir
 and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
 stored embedding from MCP responses.
 
-Day 8 will define the proposed-save contract for every client through MCP `initialize` instructions: select only
-durable candidate facts, retrieve the top 5-10 scoped candidates, then add the memory, skip an obvious duplicate, or
-delete and replace a clearly stale memory. Preserve separate memories when uncertain and never store secrets or
+`getMemories(appId)` currently returns every memory in a namespace and is reserved for explicit full-project audits.
+Cursor-based pagination is planned before models are directed to use it routinely.
+
+MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
+retrieve the top 5-10 scoped candidates, then add the memory, remove redundant duplicates while retaining one canonical
+memory, or delete and replace clearly stale memories. Preserve separate memories when uncertain and never store secrets or
 credentials. Recall deliberately does not run a backend fact-extraction pipeline, scheduled Cloud Run Job, or periodic
 full-namespace consolidation pass. A client-specific skill or prompt is optional reinforcement, not part of this server
 contract.

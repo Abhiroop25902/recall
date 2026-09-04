@@ -21,6 +21,7 @@
 - Do not store routine progress updates, duplicate facts, transient debugging output, raw logs, speculative ideas, secrets, tokens, or private keys.
 - Consolidate related facts instead of creating near-duplicate memories. When a later decision supersedes an earlier one, record the new decision clearly.
 - After major milestones or when search results become repetitive or noisy, run a Mem0 review/consolidation. Present proposed merges, conflict resolutions, and deletions for approval before applying destructive cleanup.
+- For Recall MCP usage, derive `appId` from the current project: use the repository name for code projects or the folder name otherwise. Reuse it across agents and devices; never use a folder path, branch, session ID, task name, or random value.
 
 ## Local development
 

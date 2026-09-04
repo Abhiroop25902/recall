@@ -1,6 +1,6 @@
 # Recall
 
-Recall is a personal, cloud-hosted memory service for coding agents.
+Recall is a personal, cloud-hosted memory service for AI agents working on coding and non-coding projects.
 
 ## Project scope
 
@@ -12,7 +12,7 @@ If you prefer a managed memory service with minimal setup and customer support, 
 
 ## Why I am building this
 
-I use Mem0 to give coding agents persistent context, but the free tier is too limited for regular use. The Mem0 dashboard currently shows a hobby plan with limited retrieval capacity, while the paid plan is roughly **₹2,000 per month** in my local estimate.
+I use Mem0 to give AI agents persistent context, but the free tier is too limited for regular use. The Mem0 dashboard currently shows a hobby plan with limited retrieval capacity, while the paid plan is roughly **₹2,000 per month** in my local estimate.
 
 That made me wonder:
 
@@ -22,7 +22,7 @@ I have a good feeling that the answer is yes. Recall is the experiment: build on
 
 ## What Recall is intended to provide
 
-- Persistent memories scoped by application (`appId`) in a single-user deployment.
+- Persistent memories scoped by project (`appId`) in a single-user deployment. Use the repository name for code projects or the folder name for other projects, consistently across agents and devices.
 - Semantic search over stored memories using vector embeddings.
 - MCP-guided proposed-save consolidation: clients handle duplicates and contradictions using scoped semantic retrieval.
 - `GET /v1/health` for service health checks.
