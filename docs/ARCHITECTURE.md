@@ -16,7 +16,7 @@
 - `/v1/mcp` is the stateless Streamable HTTP MCP endpoint that exposes memory tools.
 - The deployed MCP endpoint is `https://recall.abhiroop.dev/v1/mcp`.
 - Memory operations currently use MCP tools; there is no custom REST memory API.
-- Day 8 will publish harness-neutral guidance for using the memory tools through MCP `initialize` responses.
+- MCP `initialize` responses publish harness-neutral guidance for using the memory tools.
 - The `/v1` URL namespace is independent of the MCP protocol version configured by
   `spring.ai.mcp.server.version`.
 

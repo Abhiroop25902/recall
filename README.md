@@ -48,7 +48,7 @@ The local service exposes:
 - Deployed MCP: `https://recall.abhiroop.dev/v1/mcp`
 
 Memory operations are currently exposed through MCP tools rather than custom REST endpoints.
-Day 8 will publish harness-neutral proposed-save guidance through MCP initialization; client-specific skills are optional reinforcement.
+MCP initialization publishes harness-neutral proposed-save guidance; client-specific skills are optional reinforcement.
 
 Cloud Run uses one Secret Manager-backed `RECALL_API_KEY` and requires this header for `/v1/mcp`:
 

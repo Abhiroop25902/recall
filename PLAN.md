@@ -16,7 +16,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
-- [ ] Day 8: OpenCode proposed-save consolidation
+- [ ] Day 8: OpenCode proposed-save consolidation — MCP guidance and existing primitives complete; OpenCode verification and pagination pending.
 - [ ] Day 9: OpenCode integration & cross-device verification
 - [ ] Day 10: Post-MVP Google Cloud setup guide
 
@@ -173,12 +173,12 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Publish a harness-neutral proposed-save contract through MCP, then verify it with OpenCode without adding a backend fact-extraction pipeline or periodic cleanup job.
 
-- [ ] **Task 8.1: MCP usage guidance**
+- [x] **Task 8.1: MCP usage guidance**
     - Publish a harness-neutral "how to use Recall" contract through the MCP `initialize` instructions.
     - Require clients to select durable candidate facts, retrieve the scoped top 5-10 comparable memories with `getTopNClosest`, then choose ADD, NOOP, or delete-then-create replacement.
     - Treat only clear duplicates or contradictions as grounds for NOOP or replacement; preserve separate memories when uncertain and never save secrets or credentials.
     - Do not add a separate guidance tool, prompt, or resource unless client testing shows the initialization instructions are insufficient.
-- [ ] **Task 8.2: Existing MCP primitives**
+- [x] **Task 8.2: Existing MCP primitives**
     - Use the existing `saveMemory` and `deleteMemory` tools; do not add backend fact extraction, a Cloud Run Job, or periodic full-namespace cleanup.
 - [ ] **Task 8.3: OpenCode harness test**
     - Add a project-local OpenCode MCP configuration for the deployed endpoint without committing credentials.
@@ -188,7 +188,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Reserve paginated listing for explicit full-project audits and cleanup; use `getTopNClosest` for routine retrieval and consolidation.
     - Update `spring.ai.mcp.server.instructions` after pagination is implemented to direct full-project audits to paginated `getMemories`.
 - [ ] **Verification**
-    - Verify an authenticated MCP `initialize` response contains the published guidance.
+    - [x] An authenticated deployed MCP `initialize` response contains the published guidance.
     - From OpenCode, verify duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
 
 ---
