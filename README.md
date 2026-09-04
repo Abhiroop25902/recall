@@ -12,7 +12,7 @@ If you prefer a managed memory service with minimal setup and customer support, 
 
 ## Why I am building this
 
-I use Mem0 to give AI agents persistent context, but the free tier is too limited for regular use. The Mem0 dashboard currently shows a hobby plan with limited retrieval capacity, while the paid plan is roughly **₹2,000 per month** in my local estimate.
+I began with Mem0 to give AI agents persistent context, but the free tier was too limited for regular use. The Mem0 dashboard showed a hobby plan with limited retrieval capacity, while the paid plan was roughly **₹2,000 per month** in my local estimate.
 
 That made me wonder:
 

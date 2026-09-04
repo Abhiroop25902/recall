@@ -1,7 +1,7 @@
 # Recall: Developer Implementation Plan
 
 This file tracks implementation work. The current architecture and package layout live
-in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and Mem0 guidance live in [AGENTS.md](AGENTS.md).
+in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); agent collaboration and memory guidance live in [AGENTS.md](AGENTS.md).
 
 Recall's application interface is a stateless Streamable HTTP MCP server for coding agents. There is no custom REST memory API;
 the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
