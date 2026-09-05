@@ -47,8 +47,16 @@ namespaces, the service creates an L2-normalized query embedding and queries Fir
 and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
 stored embedding from MCP responses.
 
-`getMemories(appId)` currently returns every memory in a namespace and is reserved for explicit full-project audits.
-Cursor-based pagination is planned before models are directed to use it routinely.
+`getMemories(appId, cursor)` returns `GetMemoriesPage(memories, nextCursor)` with at most 10 memories and is reserved
+for explicit full-project audits. Results are ordered ascending by `createdAt`, then document ID. Omit `cursor` for
+the first page; pass the server-issued `nextCursor` unchanged as `cursor` for each subsequent page. Do not reconstruct
+the cursor from memory timestamps. A supplied cursor requires an ISO-8601 `afterCreatedAt` Instant and a nonblank `afterId`.
+The service issues a cursor from the last record of a full page using `Timestamp.toSqlTimestamp().toInstant()` and
+converts it back without losing nanoseconds; the repository applies exclusive `startAfter(timestamp, id)`.
+Stop when `nextCursor` is null (empty or short page); an exact multiple of 10 requires a final empty-page request.
+Read all pages before proposing audit cleanup. Pagination is not a snapshot: concurrent writes and deletes may affect results.
+The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering;
+index availability and live page-boundary behavior must be verified before deployment is considered complete.
 
 MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
 retrieve the top 5-10 scoped candidates, then add the memory, remove redundant duplicates while retaining one canonical

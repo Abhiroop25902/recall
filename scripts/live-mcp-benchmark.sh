@@ -71,7 +71,11 @@ cleanup() {
             --header 'Content-Type: application/json' \
             --header 'Accept: application/json, text/event-stream' \
             --data "$payload")" || cleanup_failed=1
-        jq -e '(.result.content[0].text | fromjson) == []' <<< "$response" > /dev/null || cleanup_failed=1
+        jq -e '(.result.isError | not) and (.result.content[0].text | fromjson |
+            if type == "array" then . == []
+            elif type == "object" then .memories == [] and has("nextCursor") and .nextCursor == null
+            else false end)' <<< "$response" > /dev/null || cleanup_failed=1
+        printf 'cleanup contract: %s\n' "$(jq -r '.result.content[0].text | fromjson | type' <<< "$response")"
     done
     set -e
     return "$cleanup_failed"
@@ -98,6 +102,7 @@ done
 
 cleanup
 trap - EXIT
+printf 'Cleanup verified for both temporary namespaces (%s records).\n' "${#CREATED_IDS[@]}"
 
 python3 - "$RESULTS" <<'PY'
 import csv

@@ -1,12 +1,18 @@
 package com.abhiroop.recall.service;
 
+import com.abhiroop.recall.RecallApplication;
+import com.abhiroop.recall.dto.GetMemoriesCursor;
 import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
+import com.google.cloud.Timestamp;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -29,14 +35,74 @@ class MemoryServiceTest {
     }
 
     @Test
-    void getMemoriesDelegatesToRepository() {
+    void getMemoriesWithNullCursorRequestsFirstPageOfTen() {
         var repository = new FakeMemoryRepository();
         var expected = List.of(new Memory(null, "app", "text", null, null));
         repository.memories = expected;
         var service = new MemoryService(repository, mock(EmbeddingModel.class));
 
-        assertSame(expected, service.getMemories("app"));
+        var page = service.getMemories("app", null);
+        assertSame(expected, page.memories());
+        assertNull(page.nextCursor());
         assertEquals("app", repository.requestedAppId);
+        assertEquals(10, repository.requestedPageSize);
+        assertNull(repository.afterCreatedAt);
+        assertNull(repository.afterId);
+    }
+
+    @Test
+    void getMemoriesWithCursorPreservesExactNanoseconds() {
+        var repository = new FakeMemoryRepository();
+        var expected = List.of(new Memory("next-id", "app", "text", null, null));
+        repository.memories = expected;
+        var service = new MemoryService(repository, mock(EmbeddingModel.class));
+        var instant = Instant.parse("2026-09-05T12:34:56.123456789Z");
+        var cursor = new GetMemoriesCursor(instant, "previous-id");
+
+        var page = service.getMemories("app", cursor);
+        assertSame(expected, page.memories());
+        assertNull(page.nextCursor());
+        assertEquals("app", repository.requestedAppId);
+        assertEquals(10, repository.requestedPageSize);
+        assertEquals(instant.getEpochSecond(), repository.afterCreatedAt.getSeconds());
+        assertEquals(123456789, repository.afterCreatedAt.getNanos());
+        assertEquals("previous-id", repository.afterId);
+    }
+
+    @Test
+    void getMemoriesEmptyPageHasNoCursor() {
+        var service = new MemoryService(new FakeMemoryRepository(), mock(EmbeddingModel.class));
+        var page = service.getMemories("app", null);
+        assertEquals(List.of(), page.memories());
+        assertNull(page.nextCursor());
+    }
+
+    @Test
+    void getMemoriesToolRoundTripsServerCursorWithFullPrecision() {
+        var repository = new FakeMemoryRepository();
+        var instant = Instant.parse("2026-09-05T12:34:56.123456789Z");
+        var timestamp = Timestamp.ofTimeSecondsAndNanos(instant.getEpochSecond(), instant.getNano());
+        repository.memories = IntStream.range(0, 10)
+                .mapToObj(i -> new Memory("id-" + i, "app", "text", null, timestamp)).toList();
+        var service = new MemoryService(repository, mock(EmbeddingModel.class));
+        var page = service.getMemories("app", null);
+        assertSame(repository.memories, page.memories());
+        assertEquals(new GetMemoriesCursor(instant, "id-9"), page.nextCursor());
+
+        var tool = java.util.Arrays.stream(new RecallApplication().memoryTools(service).getToolCallbacks())
+                .filter(callback -> callback.getToolDefinition().name().equals("getMemories"))
+                .findFirst().orElseThrow();
+        var mapper = JsonMapper.builder().build();
+        var response = mapper.readTree(tool.call("{\"appId\":\"app\"}"));
+        assertEquals(10, response.get("memories").size());
+        assertEquals(instant.toString(), response.at("/nextCursor/afterCreatedAt").asString());
+        assertEquals("id-9", response.at("/nextCursor/afterId").asString());
+        repository.memories = List.of();
+        var lastPage = mapper.readTree(tool.call("{\"appId\":\"app\",\"cursor\":" + response.get("nextCursor") + "}"));
+        assertEquals(timestamp, repository.afterCreatedAt);
+        assertEquals("id-9", repository.afterId);
+        assertTrue(lastPage.get("memories").isEmpty());
+        assertTrue(lastPage.get("nextCursor").isNull());
     }
 
     @Test
@@ -105,6 +171,9 @@ class MemoryServiceTest {
         private long memoryCount;
         private List<Memory> nearestMemories = List.of();
         private String requestedAppId;
+        private int requestedPageSize;
+        private Timestamp afterCreatedAt;
+        private String afterId;
         private String deletedId;
         private int findCountCalls;
         private String countedAppId;
@@ -124,8 +193,11 @@ class MemoryServiceTest {
         }
 
         @Override
-        public List<Memory> findByAppId(String appId) {
+        public List<Memory> findByAppId(String appId, int pageSize, Timestamp afterCreatedAt, String afterId) {
             requestedAppId = appId;
+            requestedPageSize = pageSize;
+            this.afterCreatedAt = afterCreatedAt;
+            this.afterId = afterId;
             return memories;
         }
 

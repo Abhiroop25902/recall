@@ -2,16 +2,14 @@ package com.abhiroop.recall.repository;
 
 import com.abhiroop.recall.entity.Memory;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.VectorQuery;
-import com.google.cloud.firestore.VectorValue;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -67,15 +65,27 @@ public class FirestoreMemoryRepository implements MemoryRepository {
         await(firestore.collection(Memory.COLLECTION_ID).document(requireId(id)).delete());
     }
 
+
     @Override
-    public List<Memory> findByAppId(String appId) {
+    public List<Memory> findByAppId(String appId,
+                                    int pageSize,
+                                    @Nullable Timestamp afterCreatedAt,
+                                    @Nullable String afterId) {
         if (appId == null || appId.isBlank()) {
             throw new IllegalArgumentException("appId must not be blank");
         }
 
-        return await(firestore.collection(Memory.COLLECTION_ID)
+        Query query = firestore.collection(Memory.COLLECTION_ID)
                 .whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), appId)
-                .get())
+                .orderBy(Memory.Fields.CREATED_AT.getFieldPath())
+                .orderBy(FieldPath.documentId())
+                .limit(pageSize);
+
+        if (afterCreatedAt != null) {
+            query = query.startAfter(afterCreatedAt, afterId);
+        }
+
+        return await(query.get())
                 .getDocuments()
                 .stream()
                 .map(document -> document.toObject(Memory.class))

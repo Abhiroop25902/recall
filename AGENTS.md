@@ -20,7 +20,7 @@
 - Store only durable, high-value knowledge with `saveMemory`: explicit user decisions, architectural choices, stable conventions, resolved root causes, API contracts, and meaningful task outcomes.
 - Do not store routine progress updates, duplicate facts, transient debugging output, raw logs, speculative ideas, secrets, tokens, or private keys.
 - Retrieve 5-10 scoped comparable memories before saving. Consolidate only clear duplicates or contradictions; preserve separate records when uncertain.
-- Use `getMemories` only for an explicit full-project audit. Present proposed merges, conflict resolutions, and deletions for approval before destructive cleanup.
+- Use `getMemories` only for an explicit full-project audit. Responses contain `memories` and `nextCursor`. Read all pages before proposing cleanup: omit `cursor` initially, then pass the server-issued `nextCursor` unchanged as `cursor`. Stop when `nextCursor` is null; do not reconstruct it from memory timestamps. Present proposed merges, conflict resolutions, and deletions for approval before destructive cleanup.
 - Derive `appId` from the current project: use the repository name for code projects or the folder name otherwise. Reuse it across agents and devices; never use a folder path, branch, session ID, task name, or random value.
 
 ## Local development

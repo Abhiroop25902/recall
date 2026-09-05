@@ -16,7 +16,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
-- [ ] Day 8: OpenCode proposed-save consolidation — MCP guidance and existing primitives complete; OpenCode verification and pagination pending.
+- [ ] Day 8: OpenCode proposed-save consolidation — OpenCode harness verification complete; pagination implementation, guidance, and unit tests complete; MCP cursor and live pagination verification pending.
 - [ ] Day 9: OpenCode integration & cross-device verification
 - [ ] Day 10: Post-MVP Google Cloud setup guide
 
@@ -184,11 +184,15 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Add a project-local OpenCode MCP configuration for the deployed endpoint without committing credentials.
     - Confirm OpenCode discovers the server guidance and applies the proposed-save contract.
 - [ ] **Task 8.4: Bounded memory listing**
-    - Add cursor-based pagination to `getMemories` with a conservative page-size cap and deterministic ordering.
+    - Implementation, client guidance, unit tests, and local Spring AI tool callback roundtrip complete. Pending after deployment: actual MCP transport calls with omitted/supplied cursors, Firestore index availability, and live equal-timestamp page-boundary verification. No deployment was performed in this checkpoint.
+    - Local verification (2026-09-05): `./gradlew test` passed all 28 tests; `git diff --check` and `bash -n scripts/live-mcp-benchmark.sh` passed. Tests cover empty/short/full response pages, cursor validation, nanosecond-preserving conversion, and distinct mocked Firestore query stages for ordering/limit/startAfter. The application's actual Spring AI callback provider accepts omitted cursor, emits an ISO Instant with nine fractional digits, accepts the returned cursor unchanged, and emits a terminal null cursor. This is not a live MCP transport or Firestore integration test.
+    - `getMemories` returns `GetMemoriesPage(memories, nextCursor)` with a fixed page size of 10 and deterministic ordering. Omit `cursor` initially, pass server-issued `nextCursor` unchanged, and stop on null; never reconstruct it from memory timestamps. Full pages issue a cursor, so exact multiples require a final empty request.
     - Reserve paginated listing for explicit full-project audits and cleanup; use `getTopNClosest` for routine retrieval and consolidation.
-    - Update `spring.ai.mcp.server.instructions` after pagination is implemented to direct full-project audits to paginated `getMemories`.
+    - Updated tool description, `spring.ai.mcp.server.instructions`, `AGENTS.md`, and architecture guidance to the server-issued cursor contract. Ran `graphify update .` (AST-only); graphify refreshed five community names from hubs and recommends optional relabeling.
+    - Deployed latency recheck (2026-09-05), using `scripts/live-mcp-benchmark.sh` and the injected API key: 30 saves mean 665 ms, p50 660 ms, p95 763 ms, p99 800 ms; 30 scoped top-one retrievals mean 677 ms, p50 671 ms, p95 815 ms, p99 865 ms. All 66 workload calls passed; retrieval isolation passed; all 36 generated records were deleted and both temporary namespaces verified empty. CSV: `/tmp/recall-benchmark-20260905T155355Z-33847.csv`.
+    - The deployed `getMemories` still returns a legacy array, unlike the local page object. Benchmark cleanup accepts either a legacy empty array or an empty page with null `nextCursor` only for this concrete deployment transition. Latency results measure deployed code, not the new pagination contract.
 - [x] **Verification**
-    - [x] An authenticated deployed MCP `initialize` response contains the published guidance.
+    - [x] An authenticated deployed MCP `initialize` response contains the published proposed-save guidance. New pagination guidance still needs post-deployment verification under Task 8.4.
     - [x] From OpenCode, verified duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
 
 ---

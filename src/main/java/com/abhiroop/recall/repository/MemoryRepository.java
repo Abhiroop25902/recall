@@ -1,7 +1,9 @@
 package com.abhiroop.recall.repository;
 
 import com.abhiroop.recall.entity.Memory;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.VectorValue;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -11,7 +13,11 @@ public interface MemoryRepository {
 
     void deleteById(String id);
 
-    List<Memory> findByAppId(String appId);
+    /** Returns one page ordered by creation time then ID; continuation requires both cursor values. */
+    List<Memory> findByAppId(String appId,
+                             int pageSize,
+                             @Nullable Timestamp afterCreatedAt,
+                             @Nullable String afterId);
 
     Long findCountByAppId(String appId);
 
