@@ -55,8 +55,8 @@ The service issues a cursor from the last record of a full page using `Timestamp
 converts it back without losing nanoseconds; the repository applies exclusive `startAfter(timestamp, id)`.
 Stop when `nextCursor` is null (empty or short page); an exact multiple of 10 requires a final empty-page request.
 Read all pages before proposing audit cleanup. Pagination is not a snapshot: concurrent writes and deletes may affect results.
-The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering;
-index availability and live page-boundary behavior must be verified before deployment is considered complete.
+The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering.
+Live verification on 2026-09-06 seeded 21 records with an identical timestamp and randomized document IDs in a temporary namespace, then confirmed deployed MCP page objects, deterministic ordering, cursor relay, `10/10/1`, exact-multiple `10/10/0`, and cleanup through the tool. This confirms the deployed index and page-boundary behavior for that controlled workload.
 
 MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
 retrieve the top 5-10 scoped candidates, then add the memory, remove redundant duplicates while retaining one canonical
