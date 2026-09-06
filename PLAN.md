@@ -216,6 +216,37 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - `README.md` covers project and billing setup, required APIs, Firestore Native mode, Secret Manager, IAM, Cloud Build, Cloud Run, OpenCode configuration, and MCP verification.
     - The guide specifies the vector index (`appId` ascending with a 1536-dimensional flat `embedding`) and ordered listing index (`appId`, `createdAt`, and document ID ascending).
 
+---
+
+## Day 11: Reliability and Security Remediation
+
+**Goal:** Correct review findings before the next deployment, with cloud-free regression coverage.
+
+- [ ] **Task 11.1: Keep MCP authentication attached to its configured endpoint**
+    - Use one configured, context-aware endpoint matcher for the authentication filter and Spring Security authorization.
+    - Fail startup when `RECALL_API_KEY` is null or blank; return standards-compliant bearer authentication failures.
+    - Add real-MCP transport tests for default and overridden endpoints, valid/invalid credentials, and context paths.
+- [ ] **Task 11.2: Validate tool inputs before external work**
+    - Reject blank and overlong namespaces, and null, blank, or oversized save/query text before embedding, Firestore, or counting calls.
+    - Validate embedding vectors are finite and 1536-dimensional; normalize using a numerically safe accumulator.
+    - Test invalid requests make zero embedding and repository calls.
+- [ ] **Task 11.3: Make replacement and retry behavior recoverable**
+    - Change client guidance to save and verify a replacement before deleting obsolete memories.
+    - Document reconciliation after an ambiguous save result; add an idempotency key only if safe retries are required.
+    - Test replacement-save failure preserves the prior memory.
+- [ ] **Task 11.4: Make tests and deployment checks trustworthy**
+    - Ensure all unit and MVC tests are cloud-free: no Secret Manager, Firestore, embedding, or ADC initialization.
+    - Add repository failure-path coverage and one real-MCP integration test with local substitutes.
+    - Confirm the external Cloud Build trigger runs `./gradlew test` or `./gradlew check` before deployment, then record the verified configuration.
+- [ ] **Task 11.5: Repair live verification scripts**
+    - Make every `jq` assertion fail on `false`; propagate curl failures explicitly and make cleanup safe under macOS Bash 3.2.
+    - Reconcile all known fixture IDs and unique namespaces after ambiguous writes; require an explicit matching Firestore project when overriding the MCP URL.
+    - Label benchmark results as sequential end-to-end observations and strengthen its cross-app isolation check.
+- [ ] **Verification**
+    - Run `./gradlew test` with credentials intentionally unavailable.
+    - Run `bash -n scripts/live-mcp-benchmark.sh scripts/live-mcp-pagination-test.sh` and exercise their negative assertion paths.
+    - After deployment, verify default and overridden MCP endpoint authentication, successful replacement without data loss, and fixture cleanup.
+
 ## Completion criteria
 
 The project is complete when the deployed service accepts authenticated MCP tool calls from OpenCode and has live-verified
