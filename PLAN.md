@@ -16,9 +16,9 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 5: Firestore vector similarity search — scoped retrieval live verified; threshold filtering deferred.
 - [x] Day 6: Gemini text embeddings client — save-time and query-time generation complete.
 - [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
-- [ ] Day 8: OpenCode proposed-save consolidation — OpenCode harness verification complete; pagination implementation, guidance, and unit tests complete; MCP cursor and live pagination verification pending.
-- [ ] Day 9: OpenCode integration & cross-device verification
-- [ ] Day 10: Post-MVP Google Cloud setup guide
+- [x] Day 8: OpenCode proposed-save consolidation — OpenCode harness, pagination implementation, guidance, unit tests, MCP cursor behavior, and live pagination verification complete.
+- [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
+- [ ] Day 10: Google Cloud self-hosting setup guide
 
 ---
 
@@ -197,22 +197,22 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 ---
 
-## Day 9: OpenCode Integration & Cross-Device Verification
+## Day 9: OpenCode Integration & MVP Verification
 
 **Goal:** Connect coding agents to the deployed memory service.
 
-- [ ] **Task 9.1: MCP client configuration**
+- [x] **Task 9.1: MCP client configuration**
     - Document the deployed `/v1/mcp` URL, authentication setup, and proposed-save consolidation instruction without committing credentials.
-- [ ] **Task 9.2: End-to-end verification**
-    - Store a memory from one client and retrieve it from another environment.
+- [x] **Task 9.2: End-to-end verification**
+    - Accepted existing single-user OpenCode use of authenticated save, retrieval, and deletion as MVP verification; separate-device testing is not a requirement.
 
 ---
 
-## Day 10: Post-MVP Google Cloud Setup Guide
+## Day 10: Google Cloud Self-Hosting Setup Guide
 
-**Goal:** After MVP completion, document how to provision a new Google Cloud project for Recall.
+**Goal:** Document how to provision a new Google Cloud project for Recall.
 
-- [ ] **Task 9.1: Setup guide**
+- [ ] **Task 10.1: Setup guide**
     - Cover project and billing setup, required APIs, Firestore Native mode, the composite vector index, Secret Manager, IAM, Cloud Build, Cloud Run, and MCP verification.
 - [ ] **Verification**
     - Validate the guide by provisioning a separate project without committing credentials.

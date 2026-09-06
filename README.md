@@ -58,6 +58,26 @@ Authorization: Bearer <RECALL_API_KEY>
 
 Do not commit the key or place it in a URL.
 
+## Connect OpenCode
+
+This repository includes a project-local remote MCP configuration at
+`.opencode/opencode.json`. It connects OpenCode to
+`https://recall.abhiroop.dev/v1/mcp` and reads the bearer key from
+`RECALL_API_KEY`; the key is not stored in the configuration.
+
+Set the key in the environment that starts OpenCode, without adding it to a
+tracked file:
+
+```bash
+export RECALL_API_KEY="..."
+```
+
+For every client and device, use the repository name as `appId` for code
+projects, or the folder name for other projects. Before saving a durable fact,
+call `getTopNClosest` with that `appId` and `topN` 5-10. Add a new memory,
+skip a clear duplicate, or delete and replace a clear contradiction. Preserve
+separate memories when uncertain, and never store secrets or credentials.
+
 ## Run locally
 
 Start the application:
