@@ -19,6 +19,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 8: OpenCode proposed-save consolidation — OpenCode harness, pagination implementation, guidance, unit tests, MCP cursor behavior, and live pagination verification complete.
 - [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
 - [x] Day 10: Google Cloud self-hosting setup guide complete.
+- [ ] Day 11: Reliability and security remediation — decomposed into independently verifiable application, test, and script handoffs.
 
 ---
 
@@ -222,26 +223,64 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Correct review findings before the next deployment, with cloud-free regression coverage.
 
-- [ ] **Task 11.1: Keep MCP authentication attached to its configured endpoint**
-    - Use one configured, context-aware endpoint matcher for the authentication filter and Spring Security authorization.
-    - Fail startup when `RECALL_API_KEY` is null or blank; return standards-compliant bearer authentication failures.
-    - Add real-MCP transport tests for default and overridden endpoints, valid/invalid credentials, and context paths.
-- [ ] **Task 11.2: Validate tool inputs before external work**
-    - Reject blank and overlong namespaces, and null, blank, or oversized save/query text before embedding, Firestore, or counting calls.
-    - Validate embedding vectors are finite and 1536-dimensional; normalize using a numerically safe accumulator.
-    - Test invalid requests make zero embedding and repository calls.
-- [ ] **Task 11.3: Make replacement and retry behavior recoverable**
-    - Change client guidance to save and verify a replacement before deleting obsolete memories.
-    - Document reconciliation after an ambiguous save result; add an idempotency key only if safe retries are required.
-    - Test replacement-save failure preserves the prior memory.
-- [ ] **Task 11.4: Make tests and deployment checks trustworthy**
-    - Ensure all unit and MVC tests are cloud-free: no Secret Manager, Firestore, embedding, or ADC initialization.
-    - Add repository failure-path coverage and one real-MCP integration test with local substitutes.
-    - Confirm the external Cloud Build trigger runs `./gradlew test` or `./gradlew check` before deployment, then record the verified configuration.
-- [ ] **Task 11.5: Repair live verification scripts**
-    - Make every `jq` assertion fail on `false`; propagate curl failures explicitly and make cleanup safe under macOS Bash 3.2.
-    - Reconcile all known fixture IDs and unique namespaces after ambiguous writes; require an explicit matching Firestore project when overriding the MCP URL.
-    - Label benchmark results as sequential end-to-end observations and strengthen its cross-app isolation check.
+**Execution ownership:** application, configuration, guidance, and Cloud Console changes are user-owned. Codex owns automated-test and live-script changes. Each Codex test handoff follows its corresponding user-owned application change.
+
+- [ ] **Task 11.1a: Share the configured MCP endpoint matcher** *(user)*
+    - Use one configured, context-aware matcher for the authentication filter and Spring Security authorization.
+    - Preserve public health access; protect the configured MCP route for every HTTP method.
+- [ ] **Task 11.1b: Create a cloud-free real-MCP test fixture** *(Codex; after Task 11.1a)*
+    - Boot the actual Spring AI WebMVC MCP transport with local repository and embedding substitutes.
+    - Exclude Secret Manager, Firestore, Google embedding, and ADC initialization.
+- [ ] **Task 11.1c: Verify configured MCP route authentication** *(Codex; after Task 11.1b)*
+    - Exercise a real MCP `initialize` request at the default endpoint, an overridden endpoint, and behind a context path.
+    - Verify the active endpoint is challenged and a valid credential reaches the MCP transport; the stale default route must not become an unprotected MCP route.
+- [ ] **Task 11.1d: Fail fast for invalid API-key configuration** *(user)*
+    - Fail startup when `RECALL_API_KEY` is absent, blank, or whitespace-only.
+    - Return `401` bearer authentication failures with `WWW-Authenticate: Bearer` without exposing credential details.
+- [ ] **Task 11.1e: Verify API-key and bearer failure contracts** *(Codex; after Task 11.1d)*
+    - Cover absent, blank, whitespace-only, malformed, invalid, and valid credentials against the real MCP route.
+
+- [ ] **Task 11.2a: Validate required tool inputs before external work** *(user)*
+    - Reject null or blank app IDs and save/query text before embedding, Firestore counting, listing, or vector queries.
+    - Preserve the existing `topN` contract while rejecting invalid inputs before its zero-result shortcut.
+    - Defer proactive size limits: do not add arbitrary character caps. Revisit only with a concrete token- or byte-based contract.
+- [ ] **Task 11.2b: Prove invalid tool inputs do no external work** *(Codex; after Task 11.2a)*
+    - Cover invalid save, list, and search inputs and assert zero embedding and repository interactions.
+- [ ] **Task 11.2c: Make embedding normalization a strict boundary** *(user)*
+    - Reject null, zero, non-finite, and non-1536-dimensional vectors; calculate the norm with a numerically safe accumulator.
+- [ ] **Task 11.2d: Cover strict embedding normalization** *(Codex; after Task 11.2c)*
+    - Migrate valid fixtures to 1536 dimensions and cover wrong-size, zero, null, NaN, infinity, and large finite vectors.
+
+- [ ] **Task 11.3a: Publish recoverable replacement guidance** *(user)*
+    - Require clients to save and verify a replacement before deleting an obsolete memory.
+    - On an ambiguous save result, require scoped reconciliation and prohibit blind retry; stop for audit if reconciliation is inconclusive.
+    - Do not add idempotency keys unless unattended automatic retries become a concrete requirement.
+- [ ] **Task 11.3b: Verify replacement safety guidance and behavior** *(Codex; after Task 11.3a)*
+    - Assert the MCP initialization guidance publishes the replacement and ambiguity rules.
+    - Prove a failed replacement save leaves the prior record intact and a successful save returns its replacement ID before a separate delete.
+
+- [ ] **Task 11.4a: Make every test context cloud-free** *(Codex; after Task 11.1b)*
+    - Replace or isolate full application contexts so tests never initialize Secret Manager, Firestore, embedding clients, or ADC.
+    - Verify `./gradlew test` with cloud credentials intentionally unavailable.
+- [ ] **Task 11.4b: Cover a real MCP tool flow with local substitutes** *(Codex; after Task 11.4a)*
+    - Verify actual MCP initialization, tool discovery, and one deterministic authenticated tool call without cloud services.
+- [ ] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
+    - Test failed and interrupted Firestore futures through public repository methods, preserving causes and restoring the interrupt flag.
+- [ ] **Task 11.4d: Verify the Cloud Build test gate** *(user; after code tests pass)*
+    - Confirm in Cloud Console and a successful build log that `./gradlew test` or `./gradlew check` runs before buildpack deployment.
+    - Record the trigger identity, command, ordering, and verification evidence.
+
+- [ ] **Task 11.5a: Make live-script MCP assertions strict** *(Codex)*
+    - Propagate `curl` failures explicitly; require JSON-RPC 2.0, no top-level error, a result, and `isError == false` for every successful MCP assertion.
+    - Ensure every `jq` assertion exits nonzero when its predicate evaluates `false`; exercise missing `isError` and top-level error fixtures without a live deployment.
+- [ ] **Task 11.5b: Reconcile live-script cleanup completely** *(Codex; after Task 11.5a)*
+    - Reconcile every known ID and every page in each temporary namespace after ambiguous writes, then verify all records are absent.
+    - Preserve the original exit status while making unresolved cleanup failures fail the script; remain compatible with macOS Bash 3.2.
+- [ ] **Task 11.5c: Bind overridden pagination endpoints to an explicit Firestore project** *(Codex)*
+    - Require `RECALL_GCP_PROJECT_ID` before any request when `RECALL_URL` is overridden, and print the selected endpoint and project.
+- [ ] **Task 11.5d: Strengthen and label benchmark observations** *(Codex)*
+    - Verify scoped retrieval in both primary and control namespaces with distinguishable fixtures, and assert no result crosses the requested app ID.
+    - Label results as sequential client-observed end-to-end measurements, not a concurrency or load benchmark.
 - [ ] **Verification**
     - Run `./gradlew test` with credentials intentionally unavailable.
     - Run `bash -n scripts/live-mcp-benchmark.sh scripts/live-mcp-pagination-test.sh` and exercise their negative assertion paths.

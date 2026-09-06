@@ -207,10 +207,10 @@ cleanup policy.
 At `2026-09-06T06:59:52Z`, the deployed benchmark made an unmeasured health request,
 then five warm-up saves.
 
-| Operation | Samples | p50 | p95 |
-|--------------------------|--------:|-------:|-------:|open
-| Save | 30 | 545 ms | 658 ms |
-| Scoped top-one retrieval | 30 | 552 ms | 755 ms |
+| Operation                | Samples |    p50 |    p95 |
+|--------------------------|--------:|-------:|-------:|
+| Save                     |      30 | 545 ms | 658 ms |
+| Scoped top-one retrieval |      30 | 552 ms | 755 ms |
 
 These are end-to-end client measurements that include network, Cloud Run, Vertex AI
 embeddings, and Firestore. The benchmark deleted and verified cleanup of all 36
