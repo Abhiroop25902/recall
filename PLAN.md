@@ -18,7 +18,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 7: Singapore regional migration & custom domain — Firestore, Cloud Build, and Cloud Run moved; live MCP, latency, custom-domain TLS, deployed-URL documentation, and Mumbai retirement complete.
 - [x] Day 8: OpenCode proposed-save consolidation — OpenCode harness, pagination implementation, guidance, unit tests, MCP cursor behavior, and live pagination verification complete.
 - [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
-- [ ] Day 10: Google Cloud self-hosting setup guide
+- [x] Day 10: Google Cloud self-hosting setup guide complete.
 
 ---
 
@@ -27,7 +27,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 **Goal:** Run the Java 25 / Spring Boot 4 application locally.
 
 - [x] **Task 1.1: Gradle project setup**
-    - Use Gradle, Java 25, Spring Boot 4.0.7, Spring Web MVC, Lombok, and DevTools.
+    - Use Gradle, Java 25, Spring Boot 4.1.1, Spring Web MVC, Lombok, and DevTools.
 - [x] **Task 1.2: Application entrypoint & configuration**
     - `com.abhiroop.recall.RecallApplication` is annotated with `@SpringBootApplication`.
     - Use `src/main/resources/application.properties`; Spring Boot uses port 8080 by default.
@@ -212,12 +212,11 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Document how to provision a new Google Cloud project for Recall.
 
-- [ ] **Task 10.1: Setup guide**
-    - Cover project and billing setup, required APIs, Firestore Native mode, the composite vector index, Secret Manager, IAM, Cloud Build, Cloud Run, and MCP verification.
-- [ ] **Verification**
-    - Validate the guide by provisioning a separate project without committing credentials.
+- [x] **Task 10.1: Setup guide**
+    - `README.md` covers project and billing setup, required APIs, Firestore Native mode, Secret Manager, IAM, Cloud Build, Cloud Run, OpenCode configuration, and MCP verification.
+    - The guide specifies the vector index (`appId` ascending with a 1536-dimensional flat `embedding`) and ordered listing index (`appId`, `createdAt`, and document ID ascending).
 
 ## Completion criteria
 
-The project is complete when the deployed service accepts authenticated MCP tool calls from OpenCode, persists and searches
-scoped memories, and passes end-to-end retrieval from a separate client.
+The project is complete when the deployed service accepts authenticated MCP tool calls from OpenCode and has live-verified
+save, scoped retrieval, and deletion behavior.

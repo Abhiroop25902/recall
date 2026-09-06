@@ -25,7 +25,7 @@
 
 ## Local development
 
-- Start the application with `./gradlew bootRun`.
+- Start the application with `./gradlew bootRun` only when Application Default Credentials and access to Firestore, Vertex AI, and Secret Manager in the configured Google Cloud project are available.
 - Run tests with `./gradlew test`.
 - For DevTools restart on file changes, run `./gradlew classes --continuous` alongside `./gradlew bootRun`.
 
@@ -36,7 +36,7 @@
 - The Cloud Run runtime service account needs `roles/secretmanager.secretAccessor` on the `RECALL_API_KEY` secret and `roles/datastore.user` for Firestore. The deployer, not the runtime service account, needs `roles/iam.serviceAccountUser` to attach it.
 - Embedding inference requires the Agent Platform API (`aiplatform.googleapis.com`) and `roles/aiplatform.user` (displayed as Agent Platform User) on the Cloud Run runtime service account.
 - Tests must disable `spring.config.import` and provide a local `sm@RECALL_API_KEY` value so they never call Google Cloud.
-- Scoped vector retrieval requires a Firestore composite index with ascending `appId` and a 1536-dimensional flat vector index on `embedding`.
+- Scoped vector retrieval requires a Firestore vector index with ascending `appId` and a 1536-dimensional flat index on `embedding`; paginated listing requires ascending `appId`, `createdAt`, and document ID.
 - For live MCP tests, authenticate with the locally injected `$RECALL_API_KEY`, not a `gcloud` secret lookup; use unique temporary app IDs, verify cross-app isolation, then delete and verify cleanup of all test records.
 - Keep embedding generation synchronous. The Hyderabad-to-Singapore custom-domain benchmark had 609 ms save p50, 733 ms save p95, 609 ms retrieval p50, and 917 ms retrieval p95; reconsider deferred embeddings only if real-use p95 exceeds 2 s or errors appear.
 

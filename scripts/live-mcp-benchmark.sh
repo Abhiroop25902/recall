@@ -4,6 +4,7 @@ set -euo pipefail
 : "${RECALL_API_KEY:?Set RECALL_API_KEY before running this benchmark}"
 
 URL="${RECALL_URL:-https://recall.abhiroop.dev/v1/mcp}"
+HEALTH_URL="${RECALL_HEALTH_URL:-${URL%/v1/mcp}/v1/health}"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 PRIMARY_APP_ID="recall-benchmark-${RUN_ID}-a"
 CONTROL_APP_ID="recall-benchmark-${RUN_ID}-b"
@@ -82,6 +83,8 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+curl --silent --show-error --fail --max-time 30 --output /dev/null "$HEALTH_URL"
 
 for sequence in {1..5}; do
     save_memory warm-save "$sequence" "$PRIMARY_APP_ID" "Warm-up memory $sequence for benchmark $RUN_ID."

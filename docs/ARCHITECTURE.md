@@ -4,11 +4,12 @@
 
 - Build: Gradle
 - Language: Java 25
-- Framework: Spring Boot 4.0.7
+- Framework: Spring Boot 4.1.1
 - Base package: `com.abhiroop.recall`
 - Configuration: `application.properties`
 - Local server: port 8080 by default
 - Development reload: Spring Boot DevTools with continuous Gradle compilation
+- Running the application requires Application Default Credentials and access to its configured Google Cloud project.
 
 ## HTTP surface
 
@@ -20,6 +21,12 @@
 - The `/v1` URL namespace is independent of the MCP protocol version configured by
   `spring.ai.mcp.server.version`.
 
+## Current deployment
+
+- Firestore runs in Standard edition, Native mode, in `asia-southeast1`.
+- Cloud Run runs in `asia-southeast1` and uses an HTTP startup probe at `/v1/health`.
+- The owner deployment is served at `https://recall.abhiroop.dev`; self-hosted deployments use their generated Cloud Run URL unless they independently configure a custom domain.
+
 ## Product target
 
 Recall is a cloud-hosted memory service for AI agents working on coding and non-coding projects. It exposes a versioned health endpoint and an MCP-compatible server, with persistent memory backed by Google Cloud Firestore. Gemini/Vertex AI generates normalized embeddings for saved memories and vector-search queries. Recall provides storage, scoped retrieval, save, and delete primitives; each client harness decides which durable facts to save and resolves duplicates or contradictions before writing. Cloud Run is the deployment target.
@@ -29,6 +36,7 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - The initial deployment is single-user and uses one `RECALL_API_KEY` stored in Secret Manager.
 - Spring Cloud GCP resolves the key directly using `sm@RECALL_API_KEY` and the Cloud Run service identity; the key must not be committed to configuration, logs, or environment variables.
 - The runtime service account has Secret Manager Secret Accessor on that secret and Cloud Datastore User for Firestore.
+- Embedding inference requires the Agent Platform API and Agent Platform User (`roles/aiplatform.user`) on the runtime service account.
 - `/v1/mcp` requires `Authorization: Bearer <RECALL_API_KEY>`.
 - `/v1/health` remains unauthenticated for health checks.
 - Cloud Run public access is intentional for remote MCP connectivity; application-level authentication protects memory operations.
@@ -57,6 +65,8 @@ Stop when `nextCursor` is null (empty or short page); an exact multiple of 10 re
 Read all pages before proposing audit cleanup. Pagination is not a snapshot: concurrent writes and deletes may affect results.
 The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering.
 Live verification on 2026-09-06 seeded 21 records with an identical timestamp and randomized document IDs in a temporary namespace, then confirmed deployed MCP page objects, deterministic ordering, cursor relay, `10/10/1`, exact-multiple `10/10/0`, and cleanup through the tool. This confirms the deployed index and page-boundary behavior for that controlled workload.
+
+The deployment requires two Firestore indexes: a vector index with `appId` ascending and a 1536-dimensional flat `embedding`, and an ordered listing index with `appId`, `createdAt`, and document ID ascending.
 
 MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
 retrieve the top 5-10 scoped candidates, then add the memory, remove redundant duplicates while retaining one canonical
