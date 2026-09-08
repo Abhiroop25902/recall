@@ -23,6 +23,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,8 @@ import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -73,7 +77,8 @@ class RecallMcpAuthFilterMvcTest {
     @MethodSource("httpMethods")
     void activeMcpEndpointRejectsMissingCredentialsForEveryHttpMethod(HttpMethod method) throws Exception {
         mockMvc.perform(request(method, "/v1/mcp"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"));
     }
 
     static Stream<HttpMethod> httpMethods() {
@@ -92,6 +97,29 @@ class RecallMcpAuthFilterMvcTest {
     void traceMcpEndpointIsRejectedBeforeRouting() throws Exception {
         mockMvc.perform(request(HttpMethod.TRACE, "/v1/mcp"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void missingCredentialsReturnGenericBearerChallenge() throws Exception {
+        mockMvc.perform(post("/v1/mcp"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(content().string(HttpStatus.UNAUTHORIZED.toString()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedOrInvalidAuthorizationHeaders")
+    void malformedOrInvalidCredentialsReturnGenericBearerChallenge(String authorizationHeader) throws Exception {
+        mockMvc.perform(post("/v1/mcp").header(HttpHeaders.AUTHORIZATION, authorizationHeader))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(content().string(HttpStatus.UNAUTHORIZED.toString()));
+    }
+
+    static Stream<String> malformedOrInvalidAuthorizationHeaders() {
+        return Stream.of("Basic test-api-key", "Bearer wrong-api-key");
     }
 
     @Test

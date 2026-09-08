@@ -28,6 +28,10 @@ public class RecallMcpSecurityConfig {
             @Value("${sm@RECALL_API_KEY}") String recallApiKey,
             McpServerStreamableHttpProperties properties
     ) {
+        if (recallApiKey == null || recallApiKey.isBlank()) {
+            throw new IllegalStateException("RECALL_API_KEY must be configured in Google Cloud Secrets");
+        }
+
         this.mcpEndpointMatcher = PathPatternRequestMatcher.pathPattern(properties.getMcpEndpoint());
         this.authFilter = new RecallMcpAuthFilter(recallApiKey, mcpEndpointMatcher);
     }
