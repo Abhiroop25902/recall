@@ -235,18 +235,20 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Exercise a real MCP `initialize` request at the default endpoint, an overridden endpoint, and behind a context path.
     - Verify the active endpoint is challenged and a valid credential reaches the MCP transport; the stale default route must not become an unprotected MCP route.
     - Verified locally (2026-09-08): the cloud-free fixture uses the real stateless WebMVC transport with local repository and embedding substitutes; default-route authentication covers all accepted HTTP methods, while TRACE is rejected by Spring Security before routing. Default and overridden/context-path MCP initialization passed with a valid key; active routes reject missing credentials, health remains public, and the stale route returns 404. `./gradlew test` passed.
-- [ ] **Task 11.1d: Fail fast for invalid API-key configuration** *(user)*
+- [x] **Task 11.1d: Fail fast for invalid API-key configuration** *(user)*
     - Fail startup when `RECALL_API_KEY` is absent, blank, or whitespace-only.
     - Return `401` bearer authentication failures with `WWW-Authenticate: Bearer` without exposing credential details.
-- [ ] **Task 11.1e: Verify API-key and bearer failure contracts** *(Codex; after Task 11.1d)*
+- [x] **Task 11.1e: Verify API-key and bearer failure contracts** *(Codex; after Task 11.1d)*
     - Cover absent, blank, whitespace-only, malformed, invalid, and valid credentials against the real MCP route.
+    - Verified locally (2026-09-08): invalid configured API keys fail before the security filter is created. The cloud-free real-MCP fixture verifies generic `401` responses with `WWW-Authenticate: Bearer` for missing, malformed, and invalid credentials; valid bearer initialization remains covered. `./gradlew test` passed.
 
-- [ ] **Task 11.2a: Validate required tool inputs before external work** *(user)*
+- [x] **Task 11.2a: Validate required tool inputs before external work** *(user)*
     - Reject null or blank app IDs and save/query text before embedding, Firestore counting, listing, or vector queries.
     - Preserve the existing `topN` contract while rejecting invalid inputs before its zero-result shortcut.
     - Defer proactive size limits: do not add arbitrary character caps. Revisit only with a concrete token- or byte-based contract.
-- [ ] **Task 11.2b: Prove invalid tool inputs do no external work** *(Codex; after Task 11.2a)*
+- [x] **Task 11.2b: Prove invalid tool inputs do no external work** *(Codex; after Task 11.2a)*
     - Cover invalid save, list, and search inputs and assert zero embedding and repository interactions.
+    - Verified locally (2026-09-09): DTO tests reject null, empty, and whitespace-only save app IDs and text. Service tests reject the same invalid listing and retrieval inputs, including retrieval requests with `topN == 0`, while Mockito verifies zero repository and embedding interactions. `./gradlew test` passed.
 - [ ] **Task 11.2c: Make embedding normalization a strict boundary** *(user)*
     - Reject null, zero, non-finite, and non-1536-dimensional vectors; calculate the norm with a numerically safe accumulator.
 - [ ] **Task 11.2d: Cover strict embedding normalization** *(Codex; after Task 11.2c)*

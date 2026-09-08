@@ -7,6 +7,9 @@ import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.google.cloud.Timestamp;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.embedding.EmbeddingModel;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -77,6 +80,19 @@ class MemoryServiceTest {
         assertNull(page.nextCursor());
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void getMemoriesRejectsMissingOrBlankAppIdWithoutExternalWork(String appId) {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertThrows(IllegalArgumentException.class, () -> service.getMemories(appId, null));
+
+        verifyNoInteractions(repository, embeddingModel);
+    }
+
     @Test
     void getMemoriesToolRoundTripsServerCursorWithFullPrecision() {
         var repository = new FakeMemoryRepository();
@@ -136,6 +152,32 @@ class MemoryServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.getTopNClosest("app", "text", 1001));
         assertEquals(0, repository.findCountCalls);
         verifyNoInteractions(embeddingModel);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void getTopNClosestRejectsMissingOrBlankAppIdBeforeTopNShortcut(String appId) {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertThrows(IllegalArgumentException.class, () -> service.getTopNClosest(appId, "text", 0));
+
+        verifyNoInteractions(repository, embeddingModel);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void getTopNClosestRejectsMissingOrBlankTextBeforeTopNShortcut(String text) {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertThrows(IllegalArgumentException.class, () -> service.getTopNClosest("app", text, 0));
+
+        verifyNoInteractions(repository, embeddingModel);
     }
 
     @Test

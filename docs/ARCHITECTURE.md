@@ -55,6 +55,11 @@ namespaces, the service creates an L2-normalized query embedding and queries Fir
 and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
 stored embedding from MCP responses.
 
+All memory tool inputs are validated before external work: saving requires nonblank `appId` and text, listing requires
+a nonblank `appId`, and retrieval requires nonblank `appId` and text before its `topN == 0` shortcut, Firestore count,
+or embedding inference. The service deliberately has no proactive character limit until a concrete token- or byte-based
+contract requires one.
+
 `getMemories(appId, cursor)` returns `GetMemoriesPage(memories, nextCursor)` with at most 10 memories and is reserved
 for explicit full-project audits. Results are ordered ascending by `createdAt`, then document ID. Omit `cursor` for
 the first page; pass the server-issued `nextCursor` unchanged as `cursor` for each subsequent page. Do not reconstruct

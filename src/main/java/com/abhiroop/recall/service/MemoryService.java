@@ -6,6 +6,7 @@ import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.abhiroop.recall.utils.EmbeddingUtils;
+import com.abhiroop.recall.utils.ErrorStrings;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.VectorValue;
@@ -59,6 +60,11 @@ public class MemoryService {
             String appId,
             @Nullable GetMemoriesCursor cursor
     ) {
+        if (appId == null || appId.isBlank())
+            throw new IllegalArgumentException(
+                    ErrorStrings.APP_ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+
         Timestamp afterCreatedAt = null;
         String afterId = null;
 
@@ -92,6 +98,16 @@ public class MemoryService {
 
     @Tool(description = "Get top n closest memories")
     List<Memory> getTopNClosest(String appId, String text, int topN) {
+        if (appId == null || appId.isBlank())
+            throw new IllegalArgumentException(
+                    ErrorStrings.APP_ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+
+        if (text == null || text.isBlank())
+            throw new IllegalArgumentException(
+                    ErrorStrings.TEXT_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+
         if (topN == 0) return List.of();
 
         if (topN < 0 || topN > 1000)
