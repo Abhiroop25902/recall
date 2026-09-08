@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,14 +20,16 @@ import java.util.List;
 public class RecallMcpAuthFilter extends OncePerRequestFilter {
 
     private final @Nullable String recallApiKey;
+    private final RequestMatcher mcpEndpointMatcher;
 
-    public RecallMcpAuthFilter(@Nullable String recallApiKey) {
+    public RecallMcpAuthFilter(@Nullable String recallApiKey, RequestMatcher mcpEndpointMatcher) {
         this.recallApiKey = recallApiKey;
+        this.mcpEndpointMatcher = mcpEndpointMatcher;
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().equals("/v1/mcp");
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        return !mcpEndpointMatcher.matches(request);
     }
 
     @Override

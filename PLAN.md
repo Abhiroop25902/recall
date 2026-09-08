@@ -225,15 +225,16 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Execution ownership:** application, configuration, guidance, and Cloud Console changes are user-owned. Codex owns automated-test and live-script changes. Each Codex test handoff follows its corresponding user-owned application change.
 
-- [ ] **Task 11.1a: Share the configured MCP endpoint matcher** *(user)*
+- [x] **Task 11.1a: Share the configured MCP endpoint matcher** *(user)*
     - Use one configured, context-aware matcher for the authentication filter and Spring Security authorization.
     - Preserve public health access; protect the configured MCP route for every HTTP method.
-- [ ] **Task 11.1b: Create a cloud-free real-MCP test fixture** *(Codex; after Task 11.1a)*
+- [x] **Task 11.1b: Create a cloud-free real-MCP test fixture** *(Codex; after Task 11.1a)*
     - Boot the actual Spring AI WebMVC MCP transport with local repository and embedding substitutes.
     - Exclude Secret Manager, Firestore, Google embedding, and ADC initialization.
-- [ ] **Task 11.1c: Verify configured MCP route authentication** *(Codex; after Task 11.1b)*
+- [x] **Task 11.1c: Verify configured MCP route authentication** *(Codex; after Task 11.1b)*
     - Exercise a real MCP `initialize` request at the default endpoint, an overridden endpoint, and behind a context path.
     - Verify the active endpoint is challenged and a valid credential reaches the MCP transport; the stale default route must not become an unprotected MCP route.
+    - Verified locally (2026-09-08): the cloud-free fixture uses the real stateless WebMVC transport with local repository and embedding substitutes; default-route authentication covers all accepted HTTP methods, while TRACE is rejected by Spring Security before routing. Default and overridden/context-path MCP initialization passed with a valid key; active routes reject missing credentials, health remains public, and the stale route returns 404. `./gradlew test` passed.
 - [ ] **Task 11.1d: Fail fast for invalid API-key configuration** *(user)*
     - Fail startup when `RECALL_API_KEY` is absent, blank, or whitespace-only.
     - Return `401` bearer authentication failures with `WWW-Authenticate: Bearer` without exposing credential details.
