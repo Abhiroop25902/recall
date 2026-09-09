@@ -38,6 +38,36 @@ class MemoryServiceTest {
     }
 
     @Test
+    void failedReplacementSaveDoesNotDeleteExistingMemory() {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModel.embed("replacement")).thenReturn(new float[]{0.6f, 0.8f});
+        when(repository.save(any())).thenThrow(new IllegalStateException("save failed"));
+        var service = new MemoryService(repository, embeddingModel);
+
+        final var request = new SaveMemoryRequestDto("app", "replacement");
+        
+        assertThrows(IllegalStateException.class, () -> service.saveMemory(request));
+
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
+    void successfulReplacementSaveReturnsIdBeforeSeparateDelete() {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModel.embed("replacement")).thenReturn(new float[]{0.6f, 0.8f});
+        when(repository.save(any())).thenReturn(new Memory("replacement-id", "app", "replacement", null, null));
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertEquals("replacement-id", service.saveMemory(new SaveMemoryRequestDto("app", "replacement")).id());
+        verify(repository, never()).deleteById(any());
+
+        service.deleteMemory("obsolete-id");
+        verify(repository).deleteById("obsolete-id");
+    }
+
+    @Test
     void getMemoriesWithNullCursorRequestsFirstPageOfTen() {
         var repository = new FakeMemoryRepository();
         var expected = List.of(new Memory(null, "app", "text", null, null));

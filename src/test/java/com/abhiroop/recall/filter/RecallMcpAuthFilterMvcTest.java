@@ -140,6 +140,11 @@ class RecallMcpAuthFilterMvcTest {
                 .andExpect(jsonPath("$.jsonrpc").value("2.0"))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.result.serverInfo.name").value("recall-mcp"))
+                .andExpect(jsonPath("$.result.instructions").value(org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("save the replacement and confirm its returned ID before separately deleting the obsolete memory"),
+                        org.hamcrest.Matchers.containsString("never blindly retry"),
+                        org.hamcrest.Matchers.containsString("stop for audit if reconciliation is inconclusive")
+                )))
                 .andExpect(jsonPath("$.error").doesNotExist());
     }
 

@@ -254,11 +254,11 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 11.2d: Cover provider embedding delegation** *(Codex; after Task 11.2c)*
     - Use normalized provider fixtures and verify the vectors are persisted and queried unchanged. Verified locally (2026-09-09): `./gradlew test` passed.
 
-- [ ] **Task 11.3a: Publish recoverable replacement guidance** *(user)*
+- [x] **Task 11.3a: Publish recoverable replacement guidance** *(user)*
     - Require clients to save and verify a replacement before deleting an obsolete memory.
     - On an ambiguous save result, require scoped reconciliation and prohibit blind retry; stop for audit if reconciliation is inconclusive.
     - Do not add idempotency keys unless unattended automatic retries become a concrete requirement.
-- [ ] **Task 11.3b: Verify replacement safety guidance and behavior** *(Codex; after Task 11.3a)*
+- [x] **Task 11.3b: Verify replacement safety guidance and behavior** *(Codex; after Task 11.3a)*
     - Assert the MCP initialization guidance publishes the replacement and ambiguity rules.
     - Prove a failed replacement save leaves the prior record intact and a successful save returns its replacement ID before a separate delete.
 

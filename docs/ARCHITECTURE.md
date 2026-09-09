@@ -74,11 +74,12 @@ Live verification on 2026-09-06 seeded 21 records with an identical timestamp an
 The deployment requires two Firestore indexes: a vector index with `appId` ascending and a 1536-dimensional flat `embedding`, and an ordered listing index with `appId`, `createdAt`, and document ID ascending.
 
 MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
-retrieve the top 5-10 scoped candidates, then add the memory, remove redundant duplicates while retaining one canonical
-memory, or delete and replace clearly stale memories. Preserve separate memories when uncertain and never store secrets or
-credentials. Recall deliberately does not run a backend fact-extraction pipeline, scheduled Cloud Run Job, or periodic
-full-namespace consolidation pass. A client-specific skill or prompt is optional reinforcement, not part of this server
-contract.
+retrieve the top 5-10 scoped candidates, then add the memory or remove redundant duplicates while retaining one canonical
+memory. For a clearly stale memory, save the replacement, confirm its returned ID, then separately delete the obsolete
+record. Reconcile an ambiguous save within the same app ID rather than blindly retrying; stop for audit if reconciliation
+is inconclusive. Preserve separate memories when uncertain and never store secrets or credentials. Recall deliberately does
+not run a backend fact-extraction pipeline, scheduled Cloud Run Job, or periodic full-namespace consolidation pass. A
+client-specific skill or prompt is optional reinforcement, not part of this server contract.
 
 ## Planned module layout
 
