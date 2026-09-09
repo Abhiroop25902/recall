@@ -1,28 +1,16 @@
 package com.abhiroop.recall.filter;
 
-import com.abhiroop.recall.RecallApplication;
-import com.abhiroop.recall.config.RecallMcpSecurityConfig;
-import com.abhiroop.recall.controller.HealthController;
-import com.abhiroop.recall.repository.MemoryRepository;
-import com.abhiroop.recall.service.MemoryService;
+import com.abhiroop.recall.support.CloudFreeMcpTestConfiguration;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.cloud.firestore.Firestore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingModel;
-import org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiEmbeddingConnectionAutoConfiguration;
-import org.springframework.ai.model.google.genai.autoconfigure.embedding.GoogleGenAiTextEmbeddingAutoConfiguration;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
@@ -32,7 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
@@ -42,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
-        classes = RecallMcpAuthFilterMvcTest.CloudFreeMcpTestConfiguration.class,
+        classes = CloudFreeMcpTestConfiguration.class,
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
                 "spring.config.import=",
@@ -148,32 +135,4 @@ class RecallMcpAuthFilterMvcTest {
                 .andExpect(jsonPath("$.error").doesNotExist());
     }
 
-    @Configuration(proxyBeanMethods = false)
-    @EnableAutoConfiguration(exclude = {
-            GoogleGenAiEmbeddingConnectionAutoConfiguration.class,
-            GoogleGenAiTextEmbeddingAutoConfiguration.class
-    })
-    @Import({RecallMcpSecurityConfig.class, HealthController.class})
-    static class CloudFreeMcpTestConfiguration {
-
-        @Bean
-        MemoryRepository memoryRepository() {
-            return mock(MemoryRepository.class);
-        }
-
-        @Bean
-        EmbeddingModel embeddingModel() {
-            return mock(EmbeddingModel.class);
-        }
-
-        @Bean
-        MemoryService memoryService(MemoryRepository memoryRepository, EmbeddingModel embeddingModel) {
-            return new MemoryService(memoryRepository, embeddingModel);
-        }
-
-        @Bean
-        ToolCallbackProvider memoryTools(MemoryService memoryService) {
-            return new RecallApplication().memoryTools(memoryService);
-        }
-    }
 }

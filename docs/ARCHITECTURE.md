@@ -41,6 +41,11 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - `/v1/health` remains unauthenticated for health checks.
 - Cloud Run public access is intentional for remote MCP connectivity; application-level authentication protects memory operations.
 
+## Test isolation
+
+- Spring application-context tests use a shared cloud-free MCP configuration with local `MemoryRepository` and `EmbeddingModel` substitutes.
+- The fixture clears Secret Manager import, disables Spring Cloud GCP auto-configuration, and excludes Google GenAI embedding auto-configuration; tests assert that no credentials provider, Firestore, or Google embedding-model beans are present.
+
 ## Memory model
 
 Each Firestore document represents one memory in the `memories/{id}` collection. The required `appId` identifies a stable

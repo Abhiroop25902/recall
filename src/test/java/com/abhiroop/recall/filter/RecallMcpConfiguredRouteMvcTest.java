@@ -1,5 +1,6 @@
 package com.abhiroop.recall.filter;
 
+import com.abhiroop.recall.support.CloudFreeMcpTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
-        classes = RecallMcpAuthFilterMvcTest.CloudFreeMcpTestConfiguration.class,
+        classes = CloudFreeMcpTestConfiguration.class,
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
                 "spring.config.import=",

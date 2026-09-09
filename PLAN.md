@@ -262,9 +262,10 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Assert the MCP initialization guidance publishes the replacement and ambiguity rules.
     - Prove a failed replacement save leaves the prior record intact and a successful save returns its replacement ID before a separate delete.
 
-- [ ] **Task 11.4a: Make every test context cloud-free** *(Codex; after Task 11.1b)*
+- [x] **Task 11.4a: Make every test context cloud-free** *(Codex; after Task 11.1b)*
     - Replace or isolate full application contexts so tests never initialize Secret Manager, Firestore, embedding clients, or ADC.
     - Verify `./gradlew test` with cloud credentials intentionally unavailable.
+    - Verified locally (2026-09-09): all Spring contexts use the shared cloud-free MCP fixture with local repository and embedding substitutes. The fixture excludes Google GenAI embedding auto-configuration, clears Secret Manager import, and disables GCP auto-configuration. The context tests assert no CredentialsProvider, Firestore, or Google embedding-model beans; `./gradlew test --rerun-tasks` passed with common ADC/project environment variables unset.
 - [ ] **Task 11.4b: Cover a real MCP tool flow with local substitutes** *(Codex; after Task 11.4a)*
     - Verify actual MCP initialization, tool discovery, and one deterministic authenticated tool call without cloud services.
 - [ ] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
