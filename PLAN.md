@@ -123,7 +123,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [ ] **Task 5.4: Threshold filtering**
     - Add an explicit similarity threshold when the retrieval consumer needs one.
 - [x] **Unit verification**
-    - Cover empty namespaces, bounds validation, query embedding normalization, and repository delegation in `MemoryServiceTest`.
+    - Cover empty namespaces, bounds validation, provider embedding delegation, and repository delegation in `MemoryServiceTest`.
 - [x] **Live verification**
     - Saved five app-A records and a closer app-B control using `$RECALL_API_KEY`; scoped top-three retrieval returned relevant app-A records and excluded the app-B record.
     - Baseline read was 156 ms; median save was 539 ms, warm-save mean was 530 ms, and top-three retrieval was 534 ms.
@@ -138,9 +138,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 6.1: Spring AI Gemini embedding model**
     - Configure the Google GenAI embedding starter with the project, global location, model, and 1536 output dimensions.
 - [x] **Task 6.2: Save-time embedding creation**
-    - Generate and L2-normalize an embedding for each `saveMemory` request before persisting it as a Firestore `VectorValue`.
+    - Generate a 1536-dimensional provider-normalized embedding for each `saveMemory` request before persisting it as a Firestore `VectorValue`.
 - [x] **Task 6.3: Search integration**
-    - Generate and normalize a query embedding in `MemoryService.getTopNClosest(...)` before scoped vector retrieval.
+    - Generate a provider-normalized query embedding in `MemoryService.getTopNClosest(...)` before scoped vector retrieval.
 - [x] **Verification**
     - Unit test embedding-to-Firestore-vector conversion during memory creation.
     - Unit test query embedding generation and vector retrieval delegation.
@@ -249,10 +249,10 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 11.2b: Prove invalid tool inputs do no external work** *(Codex; after Task 11.2a)*
     - Cover invalid save, list, and search inputs and assert zero embedding and repository interactions.
     - Verified locally (2026-09-09): DTO tests reject null, empty, and whitespace-only save app IDs and text. Service tests reject the same invalid listing and retrieval inputs, including retrieval requests with `topN == 0`, while Mockito verifies zero repository and embedding interactions. `./gradlew test` passed.
-- [ ] **Task 11.2c: Make embedding normalization a strict boundary** *(user)*
-    - Reject null, zero, non-finite, and non-1536-dimensional vectors; calculate the norm with a numerically safe accumulator.
-- [ ] **Task 11.2d: Cover strict embedding normalization** *(Codex; after Task 11.2c)*
-    - Migrate valid fixtures to 1536 dimensions and cover wrong-size, zero, null, NaN, infinity, and large finite vectors.
+- [x] **Task 11.2c: Rely on provider-side embedding normalization** *(user)*
+    - `gemini-embedding-2` automatically normalizes reduced 1536-dimensional embeddings; remove redundant local normalization and persist provider vectors unchanged.
+- [x] **Task 11.2d: Cover provider embedding delegation** *(Codex; after Task 11.2c)*
+    - Use normalized provider fixtures and verify the vectors are persisted and queried unchanged. Verified locally (2026-09-09): `./gradlew test` passed.
 
 - [ ] **Task 11.3a: Publish recoverable replacement guidance** *(user)*
     - Require clients to save and verify a replacement before deleting an obsolete memory.

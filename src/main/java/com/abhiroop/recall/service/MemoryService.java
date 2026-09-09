@@ -5,7 +5,6 @@ import com.abhiroop.recall.dto.GetMemoriesPage;
 import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
-import com.abhiroop.recall.utils.EmbeddingUtils;
 import com.abhiroop.recall.utils.ErrorStrings;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.FieldValue;
@@ -35,12 +34,12 @@ public class MemoryService {
 
     @Tool(description = "Save Memory")
     Memory saveMemory(SaveMemoryRequestDto dto) {
+        //gemini-embedding-2 => the embedding is normalized for 1536
+        //if for some reason we have to downgrade to gemini-embedding-001 have to manually normalize
         final float[] embedding = embeddingModel.embed(dto.text());
 
-        final float[] normalizedEmbedding = EmbeddingUtils.normalize(embedding);
-
         final VectorValue embeddingVector = FieldValue.vector(
-                Doubles.toArray(Floats.asList(normalizedEmbedding))
+                Doubles.toArray(Floats.asList(embedding))
         );
 
         final var memory = Memory
@@ -118,9 +117,11 @@ public class MemoryService {
 
         if (appIdMemoryCount == 0) return List.of();
 
+        //gemini-embedding-2 => the embedding is normalized for 1536
+        //if for some reason we have to downgrade to gemini-embedding-001 have to manually normalize
         final VectorValue embeddingVector = FieldValue.vector(
                 Doubles.toArray(Floats.asList(
-                        EmbeddingUtils.normalize(embeddingModel.embed(text))
+                        embeddingModel.embed(text)
                 ))
         );
 

@@ -51,7 +51,7 @@ intentionally not supported. Repository saves are create-only and cannot overwri
 
 `getTopNClosest(appId, text, topN)` is the MCP retrieval tool. It returns an empty result for `topN == 0`, rejects
 values outside `0..1000`, and checks the app namespace before paying for query embedding inference. For non-empty
-namespaces, the service creates an L2-normalized query embedding and queries Firestore with an `appId` equality filter
+namespaces, the service obtains a provider-normalized query embedding and queries Firestore with an `appId` equality filter
 and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
 stored embedding from MCP responses.
 

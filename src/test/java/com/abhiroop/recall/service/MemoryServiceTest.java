@@ -26,7 +26,7 @@ class MemoryServiceTest {
     void saveMemoryMapsDtoAndDelegatesToRepository() {
         var repository = new FakeMemoryRepository();
         var embeddingModel = mock(EmbeddingModel.class);
-        when(embeddingModel.embed("text")).thenReturn(new float[]{0.1f, 0.2f});
+        when(embeddingModel.embed("text")).thenReturn(new float[]{0.6f, 0.8f});
         var service = new MemoryService(repository, embeddingModel);
 
         Memory saved = service.saveMemory(new SaveMemoryRequestDto("app", "text"));
@@ -34,7 +34,7 @@ class MemoryServiceTest {
         assertEquals("persisted-id", saved.id());
         assertEquals("app", repository.saved.appId());
         assertEquals("text", repository.saved.text());
-        assertArrayEquals(new double[]{0.4472136, 0.8944272}, repository.saved.embedding().toArray(), 0.000001);
+        assertArrayEquals(new double[]{0.6, 0.8}, repository.saved.embedding().toArray(), 0.000001);
     }
 
     @Test
@@ -192,13 +192,13 @@ class MemoryServiceTest {
     }
 
     @Test
-    void getTopNClosestNormalizesEmbeddingAndDelegatesToRepository() {
+    void getTopNClosestDelegatesProviderEmbeddingToRepository() {
         var repository = new FakeMemoryRepository();
         repository.memoryCount = 1;
         var expected = List.of(new Memory("memory-id", "app", "memory", null, null));
         repository.nearestMemories = expected;
         var embeddingModel = mock(EmbeddingModel.class);
-        when(embeddingModel.embed("text")).thenReturn(new float[]{3f, 4f});
+        when(embeddingModel.embed("text")).thenReturn(new float[]{0.6f, 0.8f});
         var service = new MemoryService(repository, embeddingModel);
 
         assertSame(expected, service.getTopNClosest("app", "text", 3));
