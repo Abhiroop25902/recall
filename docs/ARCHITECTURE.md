@@ -45,6 +45,7 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 
 - Spring application-context tests use a shared cloud-free MCP configuration with local `MemoryRepository` and `EmbeddingModel` substitutes.
 - The fixture clears Secret Manager import, disables Spring Cloud GCP auto-configuration, and excludes Google GenAI embedding auto-configuration; tests assert that no credentials provider, Firestore, or Google embedding-model beans are present.
+- The real Spring AI transport is covered cloud-free through authenticated MCP initialization, `tools/list`, and a deterministic `getMemories` call backed by the local repository substitute.
 
 ## Memory model
 

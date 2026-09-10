@@ -266,8 +266,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Replace or isolate full application contexts so tests never initialize Secret Manager, Firestore, embedding clients, or ADC.
     - Verify `./gradlew test` with cloud credentials intentionally unavailable.
     - Verified locally (2026-09-09): all Spring contexts use the shared cloud-free MCP fixture with local repository and embedding substitutes. The fixture excludes Google GenAI embedding auto-configuration, clears Secret Manager import, and disables GCP auto-configuration. The context tests assert no CredentialsProvider, Firestore, or Google embedding-model beans; `./gradlew test --rerun-tasks` passed with common ADC/project environment variables unset.
-- [ ] **Task 11.4b: Cover a real MCP tool flow with local substitutes** *(Codex; after Task 11.4a)*
+- [x] **Task 11.4b: Cover a real MCP tool flow with local substitutes** *(Codex; after Task 11.4a)*
     - Verify actual MCP initialization, tool discovery, and one deterministic authenticated tool call without cloud services.
+    - Verified locally (2026-09-10): the cloud-free MVC fixture performs authenticated MCP initialization, `tools/list`, and a `getMemories` tool call through the real Spring AI transport. A deterministic mocked repository response is returned through MCP; `./gradlew test` and a rerun with common ADC/project environment variables unset passed.
 - [ ] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
     - Test failed and interrupted Firestore futures through public repository methods, preserving causes and restoring the interrupt flag.
 - [ ] **Task 11.4d: Verify the Cloud Build test gate** *(user; after code tests pass)*
