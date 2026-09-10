@@ -272,9 +272,10 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
   - Test failed and interrupted Firestore futures through public repository methods, preserving causes and restoring the interrupt flag.
   - Verified locally (2026-09-10): repository tests exercise failed save futures and interrupted delete futures through public methods; both preserve the original cause, and interruption restores the current thread's interrupt flag. `./gradlew test` passed.
-- [ ] **Task 11.4d: Verify the Cloud Build test gate** *(user; after code tests pass)*
+- [x] **Task 11.4d: Verify the Cloud Build test gate** *(user; after code tests pass)*
     - Confirm in Cloud Console and a successful build log that `./gradlew test` or `./gradlew check` runs before buildpack deployment.
     - Record the trigger identity, command, ordering, and verification evidence.
+    - Verified in Cloud Build (2026-09-11): the repository `cloudbuild.yaml` ran `./gradlew test` successfully before Buildpack, followed by Pull, Push, and Deploy.
 
 - [ ] **Task 11.5a: Make live-script MCP assertions strict** *(Codex)*
     - Propagate `curl` failures explicitly; require JSON-RPC 2.0, no top-level error, a result, and `isError == false` for every successful MCP assertion.

@@ -26,6 +26,7 @@
 - Firestore runs in Standard edition, Native mode, in `asia-southeast1`.
 - Cloud Run runs in `asia-southeast1` and uses an HTTP startup probe at `/v1/health`.
 - The owner deployment is served at `https://recall.abhiroop.dev`; self-hosted deployments use their generated Cloud Run URL unless they independently configure a custom domain.
+- Eligible pushes to `main` deploy through the repository `cloudbuild.yaml`. Its Java 25 test step runs `./gradlew test` before Buildpack; a failed test prevents image build and deployment. The trigger ignores documentation-only changes matching `docs/**`, `graphify-out/**`, and `**/*.md`.
 
 ## Product target
 
