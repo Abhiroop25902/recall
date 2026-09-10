@@ -114,6 +114,11 @@ The wizard creates the Cloud Build trigger, Cloud Run service, and Artifact Regi
 repository using the Java buildpack; no Dockerfile is needed. It also starts the
 first deployment automatically.
 
+The wizard normally creates the Cloud Build trigger, Artifact Registry repository,
+and Cloud Run service in the same region. If you later move any of them to a different
+region, keep the three aligned; cross-region image transfers will incur Artifact
+Registry inter-region network egress charges.
+
 Once the Artifact Registry repository exists, add a cleanup policy to retain only a
 bounded number of recent images or delete images after a chosen age. Artifact
 Registry does not enforce an automatic image-version limit, so stored images otherwise
