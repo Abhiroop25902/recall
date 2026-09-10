@@ -269,8 +269,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 11.4b: Cover a real MCP tool flow with local substitutes** *(Codex; after Task 11.4a)*
     - Verify actual MCP initialization, tool discovery, and one deterministic authenticated tool call without cloud services.
     - Verified locally (2026-09-10): the cloud-free MVC fixture performs authenticated MCP initialization, `tools/list`, and a `getMemories` tool call through the real Spring AI transport. A deterministic mocked repository response is returned through MCP; `./gradlew test` and a rerun with common ADC/project environment variables unset passed.
-- [ ] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
-    - Test failed and interrupted Firestore futures through public repository methods, preserving causes and restoring the interrupt flag.
+- [x] **Task 11.4c: Cover Firestore repository failure paths** *(Codex)*
+  - Test failed and interrupted Firestore futures through public repository methods, preserving causes and restoring the interrupt flag.
+  - Verified locally (2026-09-10): repository tests exercise failed save futures and interrupted delete futures through public methods; both preserve the original cause, and interruption restores the current thread's interrupt flag. `./gradlew test` passed.
 - [ ] **Task 11.4d: Verify the Cloud Build test gate** *(user; after code tests pass)*
     - Confirm in Cloud Console and a successful build log that `./gradlew test` or `./gradlew check` runs before buildpack deployment.
     - Record the trigger identity, command, ordering, and verification evidence.

@@ -1,23 +1,67 @@
 package com.abhiroop.recall.repository;
 
 import com.abhiroop.recall.entity.Memory;
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.FieldPath;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class FirestoreMemoryRepositoryTest {
+
+    @Test
+    void savePreservesCauseWhenFirestoreFutureFails() {
+        var firestore = mock(Firestore.class);
+        var collection = mock(CollectionReference.class);
+        var document = mock(DocumentReference.class);
+        var failure = new RuntimeException("Firestore unavailable");
+        when(firestore.collection(Memory.COLLECTION_ID)).thenReturn(collection);
+        when(collection.document()).thenReturn(document);
+        when(document.getId()).thenReturn("new-id");
+        when(document.create(any(Memory.class))).thenReturn(ApiFutures.immediateFailedFuture(failure));
+        var repository = new FirestoreMemoryRepository(firestore);
+
+        final var mem = new Memory(null, "app", "text", null, null);
+        var exception = assertThrows(IllegalStateException.class,
+                () -> repository.save(mem));
+
+        assertEquals("Firestore operation failed", exception.getMessage());
+        assertSame(failure, exception.getCause());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void deleteByIdRestoresInterruptFlagWhenFirestoreFutureIsInterrupted() throws Exception {
+        var firestore = mock(Firestore.class);
+        var collection = mock(CollectionReference.class);
+        var document = mock(DocumentReference.class);
+        ApiFuture<WriteResult> future = mock(ApiFuture.class);
+        var interruption = new InterruptedException("Firestore interrupted");
+        when(firestore.collection(Memory.COLLECTION_ID)).thenReturn(collection);
+        when(collection.document("memory-id")).thenReturn(document);
+        when(document.delete()).thenReturn(future);
+        when(future.get()).thenThrow(interruption);
+        var repository = new FirestoreMemoryRepository(firestore);
+
+        assertFalse(Thread.interrupted(), "test must not inherit an interrupt flag");
+        try {
+            var exception = assertThrows(IllegalStateException.class,
+                    () -> repository.deleteById("memory-id"));
+
+            assertEquals("Firestore operation interrupted", exception.getMessage());
+            assertSame(interruption, exception.getCause());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            assertTrue(Thread.interrupted(), "cleanup must clear the interrupt flag");
+        }
+    }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
