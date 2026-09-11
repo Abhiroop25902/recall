@@ -13,6 +13,7 @@ CREATED_IDS=()
 CALL_RESPONSE=""
 
 printf 'operation,sequence,dns,tcp,tls,ttfb,total,http_status\n' > "$RESULTS"
+printf 'Benchmark scope: sequential, client-observed end-to-end latency; not a concurrency or load benchmark.\n'
 
 tool_call() {
     local operation="$1"
@@ -94,7 +95,12 @@ for sequence in {1..30}; do
     save_memory save "$sequence" "$PRIMARY_APP_ID" "Primary benchmark memory $sequence for run $RUN_ID uses Gradle and Java 25."
 done
 
-save_memory control 1 "$CONTROL_APP_ID" "Primary benchmark memory 1 for run $RUN_ID uses Gradle and Java 25."
+save_memory control 1 "$CONTROL_APP_ID" "Control namespace benchmark memory for run $RUN_ID uses Gradle and Java 25."
+
+payload="$(jq -cn --arg appId "$CONTROL_APP_ID" --arg text "Which control namespace benchmark memory for run $RUN_ID uses Gradle and Java 25?" \
+    '{jsonrpc:"2.0", id:0, method:"tools/call", params:{name:"getTopNClosest", arguments:{appId:$appId, text:$text, topN:1}}}')"
+tool_call control-retrieval 1 "$payload"
+jq -e --arg appId "$CONTROL_APP_ID" '(.result.content[0].text | fromjson) as $results | ($results | length == 1) and $results[0].appId == $appId' <<< "$CALL_RESPONSE" > /dev/null
 
 for sequence in {1..30}; do
     payload="$(jq -cn --arg appId "$PRIMARY_APP_ID" --arg text "Which primary benchmark memory for run $RUN_ID uses Gradle and Java 25?" --argjson id "$sequence" \

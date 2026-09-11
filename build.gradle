@@ -37,5 +37,18 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'live'
+    }
+}
+
+tasks.register('liveIntegrationTest', Test) {
+    description = 'Runs opt-in deployed MCP integration tests that require credentials and Google Cloud access.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform {
+        includeTags 'live'
+    }
 }

@@ -195,6 +195,22 @@ Run the unit tests locally:
 ./gradlew test
 ```
 
+Run the opt-in deployed pagination integration test only when local Application Default
+Credentials can access the target Firestore project. It creates and removes uniquely named
+temporary records; it is intentionally excluded from `./gradlew test` and Cloud Build.
+
+```bash
+export RECALL_API_KEY='...'
+export RECALL_GCP_PROJECT_ID='your-project-id'
+./gradlew liveIntegrationTest
+```
+
+Set `RECALL_URL` to test a non-default deployed MCP endpoint. The API key must be injected
+locally; do not retrieve it with `gcloud` or commit it to configuration.
+
+`scripts/live-mcp-benchmark.sh` is retained only for sequential, client-observed deployed
+latency measurements. It is not a functional integration suite or a concurrency/load benchmark.
+
 `./gradlew bootRun` is not a standalone local mode. It requires Application Default
 Credentials and access to Firestore, Vertex AI, and Secret Manager in a real Google
 Cloud project.
@@ -209,17 +225,19 @@ cleanup policy.
 
 ## Current latency observation
 
-At `2026-09-06T06:59:52Z`, the deployed benchmark made an unmeasured health request,
-then five warm-up saves.
+At `2026-09-11T11:47:49Z`, the deployed benchmark made an unmeasured health request,
+then five warm-up saves. It also performed an unreported control-namespace retrieval to
+verify app scoping before measuring primary-namespace retrievals.
 
 | Operation                | Samples |    p50 |    p95 |
 |--------------------------|--------:|-------:|-------:|
-| Save                     |      30 | 545 ms | 658 ms |
-| Scoped top-one retrieval |      30 | 552 ms | 755 ms |
+| Save                     |      30 | 670 ms | 879 ms |
+| Scoped top-one retrieval |      30 | 673 ms | 886 ms |
 
 These are end-to-end client measurements that include network, Cloud Run, Vertex AI
-embeddings, and Firestore. The benchmark deleted and verified cleanup of all 36
-temporary records it created.
+embeddings, and Firestore. This is a sequential client-observed measurement, not a
+concurrency or load benchmark. The benchmark verified app scoping in both temporary
+namespaces, then deleted and verified cleanup of all 36 temporary records it created.
 
 ## Development note
 

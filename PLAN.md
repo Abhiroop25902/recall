@@ -19,7 +19,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 8: OpenCode proposed-save consolidation — OpenCode harness, pagination implementation, guidance, unit tests, MCP cursor behavior, and live pagination verification complete.
 - [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
 - [x] Day 10: Google Cloud self-hosting setup guide complete.
-- [ ] Day 11: Reliability and security remediation — decomposed into independently verifiable application, test, and script handoffs.
+- [x] Day 11: Reliability and security remediation — application, cloud-free test, deployed pagination integration, and latency-benchmark verification complete.
 
 ---
 
@@ -191,7 +191,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Reserve paginated listing for explicit full-project audits and cleanup; use `getTopNClosest` for routine retrieval and consolidation.
     - Updated tool description, `spring.ai.mcp.server.instructions`, `AGENTS.md`, and architecture guidance to the server-issued cursor contract. Ran `graphify update .` (AST-only); graphify refreshed five community names from hubs and recommends optional relabeling.
     - Deployed latency recheck (2026-09-05), using `scripts/live-mcp-benchmark.sh` and the injected API key: 30 saves mean 665 ms, p50 660 ms, p95 763 ms, p99 800 ms; 30 scoped top-one retrievals mean 677 ms, p50 671 ms, p95 815 ms, p99 865 ms. All 66 workload calls passed; retrieval isolation passed; all 36 generated records were deleted and both temporary namespaces verified empty. CSV: `/tmp/recall-benchmark-20260905T155355Z-33847.csv`.
-    - Live pagination verification (2026-09-06), using `scripts/live-mcp-pagination-test.sh` with the injected API key and local ADC only for Firestore fixture creation: seeded 21 same-timestamp records with randomized IDs in a unique temporary namespace, then verified deployed MCP page objects, server-issued cursor relay, deterministic document-ID ordering and scope, `10/10/1`, exact-multiple `10/10/0`, and an empty namespace. All 21 owned fixture records were deleted through MCP and both temporary namespaces were verified empty through `getMemories`.
+    - Live pagination verification (2026-09-06), using the retired `scripts/live-mcp-pagination-test.sh` with the injected API key and local ADC only for Firestore fixture creation: seeded 21 same-timestamp records with randomized IDs in a unique temporary namespace, then verified deployed MCP page objects, server-issued cursor relay, deterministic document-ID ordering and scope, `10/10/1`, exact-multiple `10/10/0`, and an empty namespace. All 21 owned fixture records were deleted through MCP and both temporary namespaces were verified empty through `getMemories`.
 - [x] **Verification**
     - [x] An authenticated deployed MCP `initialize` response contains the published proposed-save guidance and deployed pagination behavior was verified under Task 8.4.
     - [x] From OpenCode, verified duplicate no-op, contradiction replacement, unrelated-memory addition, app isolation, and cleanup.
@@ -277,21 +277,22 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Record the trigger identity, command, ordering, and verification evidence.
     - Verified in Cloud Build (2026-09-11): the repository `cloudbuild.yaml` ran `./gradlew test` successfully before Buildpack, followed by Pull, Push, and Deploy.
 
-- [ ] **Task 11.5a: Make live-script MCP assertions strict** *(Codex)*
-    - Propagate `curl` failures explicitly; require JSON-RPC 2.0, no top-level error, a result, and `isError == false` for every successful MCP assertion.
-    - Ensure every `jq` assertion exits nonzero when its predicate evaluates `false`; exercise missing `isError` and top-level error fixtures without a live deployment.
-- [ ] **Task 11.5b: Reconcile live-script cleanup completely** *(Codex; after Task 11.5a)*
-    - Reconcile every known ID and every page in each temporary namespace after ambiguous writes, then verify all records are absent.
-    - Preserve the original exit status while making unresolved cleanup failures fail the script; remain compatible with macOS Bash 3.2.
-- [ ] **Task 11.5c: Bind overridden pagination endpoints to an explicit Firestore project** *(Codex)*
-    - Require `RECALL_GCP_PROJECT_ID` before any request when `RECALL_URL` is overridden, and print the selected endpoint and project.
-- [ ] **Task 11.5d: Strengthen and label benchmark observations** *(Codex)*
-    - Verify scoped retrieval in both primary and control namespaces with distinguishable fixtures, and assert no result crosses the requested app ID.
-    - Label results as sequential client-observed end-to-end measurements, not a concurrency or load benchmark.
+- [x] **Task 11.5a: Cover MCP pagination contracts in cloud-free Java tests** *(Codex)*
+     - Exercise real WebMVC MCP JSON-RPC success contracts, server-issued cursor relay, deterministic ordering, page boundaries, invalid cursors, and app isolation without Google Cloud services.
+- [x] **Task 11.5b: Add an opt-in Java deployed pagination integration test** *(Codex)*
+     - Add a separate `liveIntegrationTest` Gradle task, excluded from Cloud Build and the default test suite.
+     - Require local `$RECALL_API_KEY`, ADC, and explicit `RECALL_GCP_PROJECT_ID`; seed unique owned Firestore fixtures, call the deployed MCP endpoint, reconcile cleanup, and verify all owned records are absent.
+- [x] **Task 11.5c: Retire the pagination shell test** *(Codex; after Task 11.5b live verification)*
+     - Remove `scripts/live-mcp-pagination-test.sh` after the Java deployed integration test has passed against the target deployment.
+- [x] **Task 11.5d: Restrict and label benchmark observations** *(Codex)*
+     - Keep `scripts/live-mcp-benchmark.sh` only for sequential client-observed end-to-end latency measurement, with fixture isolation and cleanup checks needed to trust results.
+     - Verify scoped retrieval in both primary and control namespaces with distinguishable fixtures, assert no result crosses the requested app ID, and state that the script is not a concurrency or load benchmark.
 - [ ] **Verification**
     - Run `./gradlew test` with credentials intentionally unavailable.
-    - Run `bash -n scripts/live-mcp-benchmark.sh scripts/live-mcp-pagination-test.sh` and exercise their negative assertion paths.
+    - Run `bash -n scripts/live-mcp-benchmark.sh`, `./gradlew test` with credentials unavailable, and the opt-in `./gradlew liveIntegrationTest` with injected live-test credentials.
     - After deployment, verify default and overridden MCP endpoint authentication, successful replacement without data loss, and fixture cleanup.
+    - Verified locally (2026-09-11): `./gradlew test`, `./gradlew integrationTestClasses`, `bash -n scripts/live-mcp-benchmark.sh`, and `git diff --check` passed. The opt-in `./gradlew liveIntegrationTest` passed against the configured deployed endpoint and explicit Firestore project, including 21 same-timestamp fixtures, `10/10/1`, exact-multiple `10/10/0`, app scoping, and MCP cleanup verification.
+    - Benchmark verified (2026-09-11): `scripts/live-mcp-benchmark.sh` passed with separate primary and control namespace checks, cleaned up all 36 owned records, and recorded sequential client-observed results: 30 saves mean 687 ms, p50 670 ms, p95 879 ms, p99 924 ms; 30 scoped top-one retrievals mean 698 ms, p50 673 ms, p95 886 ms, p99 931 ms. CSV: `/tmp/recall-benchmark-20260911T114749Z-7719.csv`.
 
 ## Completion criteria
 

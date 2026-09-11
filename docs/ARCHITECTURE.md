@@ -47,6 +47,9 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - Spring application-context tests use a shared cloud-free MCP configuration with local `MemoryRepository` and `EmbeddingModel` substitutes.
 - The fixture clears Secret Manager import, disables Spring Cloud GCP auto-configuration, and excludes Google GenAI embedding auto-configuration; tests assert that no credentials provider, Firestore, or Google embedding-model beans are present.
 - The real Spring AI transport is covered cloud-free through authenticated MCP initialization, `tools/list`, and a deterministic `getMemories` call backed by the local repository substitute.
+- Cloud-free transport tests also cover JSON-RPC success contracts and server-issued pagination-cursor relay.
+- `./gradlew liveIntegrationTest` is an opt-in deployed pagination test: it requires a locally injected API key, ADC, and an explicit Firestore project ID. It seeds unique temporary documents directly in Firestore, verifies the deployed MCP endpoint, then removes and verifies its owned fixtures. It is excluded from Cloud Build.
+- `scripts/live-mcp-benchmark.sh` is reserved for sequential client-observed latency measurements, with only the isolation and cleanup checks needed to trust those measurements; it is neither a functional integration suite nor a load benchmark.
 
 ## Memory model
 
@@ -76,7 +79,7 @@ converts it back without losing nanoseconds; the repository applies exclusive `s
 Stop when `nextCursor` is null (empty or short page); an exact multiple of 10 requires a final empty-page request.
 Read all pages before proposing audit cleanup. Pagination is not a snapshot: concurrent writes and deletes may affect results.
 The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering.
-Live verification on 2026-09-06 seeded 21 records with an identical timestamp and randomized document IDs in a temporary namespace, then confirmed deployed MCP page objects, deterministic ordering, cursor relay, `10/10/1`, exact-multiple `10/10/0`, and cleanup through the tool. This confirms the deployed index and page-boundary behavior for that controlled workload.
+The opt-in `liveIntegrationTest` seeds 21 same-timestamp records with unique IDs in a temporary namespace, then confirms deployed MCP page objects, deterministic ordering, cursor relay, `10/10/1`, exact-multiple `10/10/0`, and cleanup through the tool. This confirms deployed index and page-boundary behavior for that controlled workload.
 
 The deployment requires two Firestore indexes: a vector index with `appId` ascending and a 1536-dimensional flat `embedding`, and an ordered listing index with `appId`, `createdAt`, and document ID ascending.
 
