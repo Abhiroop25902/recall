@@ -20,6 +20,10 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
 - [x] Day 10: Google Cloud self-hosting setup guide complete.
 - [x] Day 11: Reliability and security remediation — application, cloud-free test, deployed pagination integration, and latency-benchmark verification complete.
+- [ ] Day 12: Harness-facing MCP contract — retrieval guidance, tool metadata, public response DTOs, and transport coverage.
+- [ ] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, and bearer parsing.
+- [ ] Day 14: Retrieval quality evaluation — representative queries, distance reporting, and an evidence-based threshold decision.
+- [ ] Day 15: App-scoped deletion — namespace mistake protection and client migration.
 
 ---
 
@@ -294,6 +298,163 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Verified locally (2026-09-11): `./gradlew test`, `./gradlew integrationTestClasses`, `bash -n scripts/live-mcp-benchmark.sh`, and `git diff --check` passed. The opt-in `./gradlew liveIntegrationTest` passed against the configured deployed endpoint and explicit Firestore project, including 21 same-timestamp fixtures, `10/10/1`, exact-multiple `10/10/0`, app scoping, and MCP cleanup verification.
     - Benchmark verified (2026-09-11): `scripts/live-mcp-benchmark.sh` passed with separate primary and control namespace checks, cleaned up all 36 owned records, and recorded sequential client-observed results: 30 saves mean 687 ms, p50 670 ms, p95 879 ms, p99 924 ms; 30 scoped top-one retrievals mean 698 ms, p50 673 ms, p95 886 ms, p99 931 ms. CSV: `/tmp/recall-benchmark-20260911T114749Z-7719.csv`.
     - Re-verified (2026-09-13): with common ADC/project environment variables unset, `./gradlew test --rerun-tasks` passed; `bash -n scripts/live-mcp-benchmark.sh` passed; and `./gradlew clean liveIntegrationTest` rebuilt the moved `src/test` live test from source and passed. The deployed default endpoint returned a bearer challenge for unauthenticated initialization, authenticated initialization and tool discovery succeeded, and an isolated replacement-save, obsolete-delete, and cleanup flow left no fixtures. An overridden deployed MCP endpoint remains to be verified if one is configured.
+
+---
+
+## Day 12: Harness-Facing MCP Contract
+
+**Goal:** Make Recall useful throughout a harness's task lifecycle and give clients a stable, tested tool contract.
+
+**Execution ownership for Days 12–15:** application, configuration, guidance, and Cloud Console changes are user-owned. Codex owns automated tests and verification tooling after the corresponding application changes.
+
+**Session workflow:** each numbered checkbox below is one session-sized handoff. Complete its stated deliverable, run the relevant check, and record the result before moving on. Follow the listed dependencies; independent Day 13 fixes can be picked up without completing Day 12. Application slices should compile and keep existing checks passing; dedicated test sessions add regression coverage. Keep public contract changes local until their client migration and verification tasks are ready for deployment.
+
+- [ ] **Task 12.1a: Publish retrieval lifecycle guidance** *(user; recommended next task)*
+    - Extend MCP initialization instructions to retrieve scoped context before substantial project work, using the task, affected subsystem, and relevant decisions to form queries.
+    - Refine unhelpful queries rather than automatically listing the entire namespace; retain explicit full-audit pagination guidance.
+    - Treat memories as contextual evidence and check current code and explicit user instructions when they conflict.
+    - Save durable outcomes after completing work, preserving the existing consolidation and recoverable replacement rules.
+- [ ] **Task 12.1b: Verify initialization guidance** *(Codex; after Task 12.1a)*
+    - Assert real MCP initialization publishes task-start retrieval, query refinement, conflict handling, and durable outcome guidance.
+    - Done when focused cloud-free initialization tests pass and existing replacement-safety assertions remain intact.
+- [ ] **Task 12.2a: Describe tool inputs and outputs** *(user)*
+    - Describe each tool's purpose, stable namespace requirements, parameter meanings, response fields, and mutation behavior.
+    - Document the existing `topN` range of `0..1000`, including the zero-result behavior, and cursor omission/relay rules.
+- [ ] **Task 12.2b: Publish MCP operation hints** *(user; after Task 12.2a)*
+    - Check the supported Spring AI mechanism and advertise appropriate read-only/destructive/idempotency hints for each tool.
+    - Done when the actual `tools/list` response reflects the intended hints; do not assume framework defaults.
+- [ ] **Task 12.2c: Lock down tool discovery schemas** *(Codex; after Task 12.2b)*
+    - Assert all four tools' names, required arguments, parameter types, meaningful descriptions, and supported hints through real MCP `tools/list`.
+    - Done when the cloud-free discovery test catches missing or incorrectly advertised tool contracts.
+- [ ] **Task 12.3a: Inspect current serialization and choose the response contract** *(user)*
+    - Inspect actual save/list/search serialization with a nonempty vector fixture; numeric-vector emission into MCP responses was not established by the review.
+    - Specify a public DTO with `id`, `appId`, `text`, and ISO-8601 `createdAt`, excluding embeddings and preserving nanosecond precision.
+    - Done when the target shape and any timestamp/client compatibility changes are recorded in `docs/ARCHITECTURE.md`.
+- [ ] **Task 12.3b: Use the public DTO for save responses** *(user; after Task 12.3a)*
+    - Add the DTO and mapping, then return it from `saveMemory` while retaining the persistence entity inside the service/repository boundary.
+    - Done when saving still returns the persisted ID with only the agreed public fields.
+- [ ] **Task 12.3c: Verify real-MCP save responses** *(Codex; after Task 12.3b)*
+    - Exercise save through WebMVC with local embedding/repository substitutes and a nonempty vector fixture.
+    - Assert persisted ID, public fields, precise timestamp serialization, and absence of an embedding field.
+- [ ] **Task 12.3d: Use public DTOs for listing and search** *(user; after Task 12.3c)*
+    - Map listing pages and nearest-neighbor results to public DTOs.
+    - Preserve the existing page envelope, server-issued cursor, result order, and memory identity fields.
+- [ ] **Task 12.3e: Verify listing and search response contracts** *(Codex; after Task 12.3d)*
+    - Assert public fields and absence of embeddings through real MCP listing and search calls.
+    - Verify search delegation and empty results, plus nanosecond-preserving pagination cursor relay.
+- [ ] **Task 12.4a: Exclude embeddings from Firestore listing reads** *(user)*
+    - Add a minimal listing projection while preserving app filtering, timestamp/document-ID ordering, limit, and cursor behavior.
+    - Done when listing retrieves only the fields needed for public responses and pagination.
+- [ ] **Task 12.4b: Verify the listing projection** *(Codex; after Task 12.4a)*
+    - Update repository query-chain coverage to assert projected fields and unchanged ordering/continuation behavior.
+    - Run the focused repository and pagination tests without cloud services.
+- [ ] **Task 12.5a: Cover invalid tool arguments over MCP** *(Codex; after Task 12.3e)*
+    - Cover invalid save/search inputs, `topN` bounds, malformed cursors, and blank delete IDs through the real transport.
+    - Assert useful error outcomes and no external work for rejected inputs; distinguish tool failures from malformed JSON-RPC requests.
+    - If observed behavior needs an application fix, record the failing case as a user-owned handoff before marking this task complete.
+- [ ] **Task 12.5b: Cover dependency failures over MCP** *(Codex; after Task 12.5a)*
+    - Simulate embedding and repository failures using local substitutes.
+    - Verify the intended MCP tool-error representation and useful messages, rather than a successful empty result; do not expose raw provider details.
+- [ ] **Task 12.5c: Cover successful deletion over MCP** *(Codex)*
+    - Exercise the current deletion contract through WebMVC and assert the response and repository interaction.
+    - Keep this test aligned with the later app-scoped migration in Day 15.
+- [ ] **Task 12.6: Verify the complete harness contract** *(user reviews client behavior; Codex runs checks; after Tasks 12.1–12.5)*
+    - Run `./gradlew test` with cloud credentials unavailable, then inspect guidance, schemas, and response shapes from a connected harness.
+    - Record verification evidence and finalize client compatibility documentation before deploying response changes.
+
+---
+
+## Day 13: Integration and Retrieval Fixes
+
+**Goal:** Fix the concrete integration and scaling issues identified in the whole-project review.
+
+- [ ] **Task 13.1a: Fix project-local endpoint configuration** *(user)*
+    - Resolve the committed `.opencode/opencode.json` entry overriding a self-hoster's same-name global `recall` server with the owner's deployment URL.
+    - Make the endpoint locally configurable, provide an example configuration, or explicitly configure the project-local override in the self-hosting guide.
+    - Keep credentials in environment substitution; done when the chosen configuration strategy no longer silently selects the owner's endpoint for self-hosters.
+- [ ] **Task 13.1b: Document and verify self-hosted configuration precedence** *(user; after Task 13.1a)*
+    - Update the setup guide for the chosen configuration strategy and supported OpenCode behavior.
+    - Verify the effective server URL from inside a fork/clone with a different global endpoint; it must target the intended self-hosted service.
+- [ ] **Task 13.2a: Replace full namespace counts with bounded existence checks** *(user)*
+    - Replace `findCountByAppId` on the search path with an app-scoped existence query using `limit(1)` and a minimal projection.
+    - Preserve the empty-namespace optimization that skips embedding inference and vector retrieval.
+- [ ] **Task 13.2b: Verify the bounded search preflight** *(Codex; after Task 13.2a)*
+    - Assert the existence query is scoped, projected, and limited to one result.
+    - Verify empty namespaces skip embedding and nearest-neighbor retrieval, while nonempty namespaces continue normally.
+    - Update affected service/MCP fixtures to the existence contract and run the cloud-free suite.
+- [ ] **Task 13.3a: Accept case-insensitive bearer schemes** *(user)*
+    - Parse the HTTP authentication scheme case-insensitively while keeping credential comparison case-sensitive.
+    - Preserve generic `401` responses and `WWW-Authenticate: Bearer` for invalid credentials.
+- [ ] **Task 13.3b: Verify bearer interoperability** *(Codex; after Task 13.3a)*
+    - Cover `Bearer`, lowercase `bearer`, and mixed-case schemes through the real MCP route.
+    - Verify malformed headers and invalid or differently cased tokens remain rejected.
+- [ ] **Task 13.4: Verify deployed fixes** *(user reviews deployment; Codex runs checks; after Tasks 13.1–13.3)*
+    - Run the cloud-free test suite and verify self-hosted configuration precedence.
+    - After deployment, verify accepted bearer scheme variants and scoped retrieval using isolated fixtures; delete and verify cleanup of any created records.
+
+---
+
+## Day 14: Retrieval Quality Evaluation
+
+**Goal:** Measure useful retrieval behavior before changing ranking or introducing a similarity cutoff.
+
+- [ ] **Task 14.1a: Define a small relevance dataset** *(user)*
+    - Include task-start context, subsystem decisions, paraphrases, unrelated queries, and comparable memories for consolidation.
+    - Done when each case has a query, expected relevant IDs or facts, chosen `topN`, and any cross-app control.
+- [ ] **Task 14.1b: Build an opt-in retrieval evaluation runner** *(Codex; after Task 14.1a)*
+    - Capture observed rankings against the expected results, using isolated fixtures and cleanup verification for live runs.
+    - Keep live evaluation outside the default cloud-free test suite and Cloud Build.
+- [ ] **Task 14.1c: Record the retrieval baseline** *(user reviews relevance; Codex runs evaluation; after Task 14.1b)*
+    - Run the representative cases, record missed facts and irrelevant results, and verify fixture cleanup.
+    - Decide whether distance reporting is useful; record adoption or deferral before Tasks 14.2a–14.2b.
+- [ ] **Task 14.2a: Add search distance reporting** *(user; if adopted in Task 14.1c; after Task 12.3e)*
+    - Expose Firestore cosine distance in a dedicated search result DTO.
+    - Clearly document that lower cosine distance means closer results and that distance is not a probability of relevance.
+    - Preserve existing memory identity fields and plan compatibility for consumers of the current result shape.
+- [ ] **Task 14.2b: Verify distance mapping and retrieval behavior** *(Codex; after Task 14.2a)*
+    - Verify distance projection/mapping, ordering, app scoping, and MCP serialization.
+    - Compare representative results with the baseline before adopting a cutoff.
+- [ ] **Task 14.3a: Decide whether threshold filtering is needed** *(user; after evaluation)*
+    - Use evaluation evidence and an actual consumer requirement to adopt or retain the deferral of Task 5.4; record the decision.
+    - If adopted, specify distance semantics, inclusive/exclusive boundaries, fewer-than-`topN` results, and empty-result behavior.
+    - Do not choose an arbitrary global threshold or interpret distance as calibrated confidence.
+- [ ] **Task 14.3b: Implement the agreed threshold contract** *(user; only if adopted in Task 14.3a)*
+    - Implement the chosen query/input contract and update tool descriptions, preserving existing behavior when the threshold is omitted if that is the agreed compatibility policy.
+- [ ] **Task 14.3c: Verify threshold behavior** *(Codex; after Task 14.3b)*
+    - Cover boundary values, invalid inputs, short/empty results, app isolation, and real MCP serialization.
+    - Re-run representative cases and record results before closing Task 5.4; if filtering remains deferred, leave implementation tasks explicitly deferred.
+
+---
+
+## Day 15: App-Scoped Deletion
+
+**Goal:** Protect against a harness accidentally deleting a known memory ID from the wrong project in the single-user deployment.
+
+- [ ] **Task 15.1: Specify scoped deletion and migration** *(user)*
+    - Specify the `deleteMemory(appId, id)` contract and validation before external work.
+    - Define missing-ID and wrong-app behavior explicitly, including retry/idempotency semantics.
+    - Treat this as namespace mistake protection within the existing single-user design, not a new multi-tenant authentication system.
+    - Done when the migration approach and any compatibility window are recorded in `docs/ARCHITECTURE.md`.
+- [ ] **Task 15.2a: Implement the scoped repository operation** *(user; after Task 15.1)*
+    - Enforce the stored namespace match with a race-safe read/delete operation and the agreed missing-record behavior.
+    - Keep the new operation local until tool and client migration are ready.
+- [ ] **Task 15.2b: Verify repository deletion protection** *(Codex; after Task 15.2a)*
+    - Cover same-app deletion, wrong-app rejection without mutation, missing records, and relevant concurrent-change behavior.
+- [ ] **Task 15.3a: Expose the scoped MCP deletion contract** *(user; after Task 15.2b)*
+    - Require and validate `appId` and `id`, call the scoped repository operation, and update tool descriptions/hints.
+    - Retire the unscoped path according to the agreed migration policy.
+- [ ] **Task 15.3b: Verify the scoped MCP tool** *(Codex; after Task 15.3a)*
+    - Assert the new schema and success/error outcomes through real MCP, including invalid inputs with no external work and wrong-app protection.
+    - Update existing deletion tests to the new contract and preserve save-confirm-delete replacement coverage.
+- [ ] **Task 15.4a: Migrate cleanup tooling** *(Codex; after Task 15.3a)*
+    - Update benchmark and live integration cleanup to pass each fixture's owning `appId`.
+    - Done when the test suite and shell syntax checks pass with the new arguments; reserve deployed checks for Task 15.5.
+- [ ] **Task 15.4b: Migrate harness guidance and client configuration instructions** *(user; after Task 15.3a)*
+    - Update MCP initialization, `AGENTS.md`, architecture, and setup documentation for scoped deletion.
+    - Coordinate the contract change with connected harnesses and preserve save-confirm-delete replacement ordering.
+- [ ] **Task 15.5: Verify deployed scoped deletion** *(user reviews deployment; Codex runs checks; after Tasks 15.3–15.4)*
+    - Run cloud-free tests and benchmark shell syntax checks.
+    - After deployment, verify cross-app deletion protection, successful replacement, and complete fixture cleanup through MCP.
 
 ## Completion criteria
 
