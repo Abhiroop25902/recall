@@ -151,6 +151,8 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Live verification**
     - Confirmed deployed `saveMemory` persists a Firestore vector; `getMemories` retrieved the test record by `appId` and `deleteMemory` removed it.
 
+**Deferred architecture decision: reactive memory operations.** Reconsider an end-to-end reactive Firestore and embedding design only if production evidence shows sustained save or retrieval p95 above 2 seconds, material error or retry pressure, or a concrete concurrent-throughput requirement. Wrapping the current synchronous calls in `Mono` alone is not a reactive redesign; adopt it only with nonblocking integrations and an explicit concurrency and backpressure model.
+
 ---
 
 ## Day 7: Singapore Regional Migration & Custom Domain
@@ -309,23 +311,28 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Session workflow:** each numbered checkbox below is one session-sized handoff. Complete its stated deliverable, run the relevant check, and record the result before moving on. Follow the listed dependencies; independent Day 13 fixes can be picked up without completing Day 12. Application slices should compile and keep existing checks passing; dedicated test sessions add regression coverage. Keep public contract changes local until their client migration and verification tasks are ready for deployment.
 
-- [ ] **Task 12.1a: Publish retrieval lifecycle guidance** *(user; recommended next task)*
+- [x] **Task 12.1a: Publish retrieval lifecycle guidance** *(user)*
     - Extend MCP initialization instructions to retrieve scoped context before substantial project work, using the task, affected subsystem, and relevant decisions to form queries.
     - Refine unhelpful queries rather than automatically listing the entire namespace; retain explicit full-audit pagination guidance.
     - Treat memories as contextual evidence and check current code and explicit user instructions when they conflict.
     - Save durable outcomes after completing work, preserving the existing consolidation and recoverable replacement rules.
-- [ ] **Task 12.1b: Verify initialization guidance** *(Codex; after Task 12.1a)*
+    - Verified locally (2026-09-14): MCP initialization now publishes the full lifecycle guidance.
+- [x] **Task 12.1b: Verify initialization guidance** *(Codex; after Task 12.1a)*
     - Assert real MCP initialization publishes task-start retrieval, query refinement, conflict handling, and durable outcome guidance.
     - Done when focused cloud-free initialization tests pass and existing replacement-safety assertions remain intact.
-- [ ] **Task 12.2a: Describe tool inputs and outputs** *(user)*
+    - Verified locally (2026-09-14): cloud-free real-MCP initialization assertions cover the lifecycle guidance and retain replacement-safety checks.
+- [x] **Task 12.2a: Describe tool inputs and outputs** *(user)*
     - Describe each tool's purpose, stable namespace requirements, parameter meanings, response fields, and mutation behavior.
     - Document the existing `topN` range of `0..1000`, including the zero-result behavior, and cursor omission/relay rules.
-- [ ] **Task 12.2b: Publish MCP operation hints** *(user; after Task 12.2a)*
+    - Verified locally (2026-09-14): MCP tool descriptions now publish purposes, inputs, outputs, namespace requirements, and mutation behavior.
+- [x] **Task 12.2b: Publish MCP operation hints** *(user; after Task 12.2a)*
     - Check the supported Spring AI mechanism and advertise appropriate read-only/destructive/idempotency hints for each tool.
     - Done when the actual `tools/list` response reflects the intended hints; do not assume framework defaults.
-- [ ] **Task 12.2c: Lock down tool discovery schemas** *(Codex; after Task 12.2b)*
+    - Verified locally (2026-09-14): the reactive `McpMemoryTools` adapter publishes read-only, destructive, idempotency, and closed-world hints through real MCP `tools/list`.
+- [x] **Task 12.2c: Lock down tool discovery schemas** *(Codex; after Task 12.2b)*
     - Assert all four tools' names, required arguments, parameter types, meaningful descriptions, and supported hints through real MCP `tools/list`.
     - Done when the cloud-free discovery test catches missing or incorrectly advertised tool contracts.
+    - Verified locally (2026-09-14): real `tools/list` coverage locks down the four tool names, input schemas, descriptions, and operation hints. `saveMemory` takes direct `appId` and `text` arguments; the internal `SaveMemoryRequestDto` was removed and validation remains in `MemoryService`.
 - [ ] **Task 12.3a: Inspect current serialization and choose the response contract** *(user)*
     - Inspect actual save/list/search serialization with a nonempty vector fixture; numeric-vector emission into MCP responses was not established by the review.
     - Specify a public DTO with `id`, `appId`, `text`, and ISO-8601 `createdAt`, excluding embeddings and preserving nanosecond precision.

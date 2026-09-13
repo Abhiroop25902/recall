@@ -1,0 +1,54 @@
+package com.abhiroop.recall.mcp;
+
+import com.abhiroop.recall.dto.GetMemoriesCursor;
+import com.abhiroop.recall.dto.GetMemoriesPage;
+import com.abhiroop.recall.entity.Memory;
+import com.abhiroop.recall.service.MemoryService;
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.mcp.annotation.McpTool;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+@Component
+public class McpMemoryTools {
+
+    private final MemoryService memoryService;
+
+    public McpMemoryTools(MemoryService memoryService) {
+        this.memoryService = memoryService;
+    }
+
+    @McpTool(
+            description = "Save a new durable memory. appId is the required stable project namespace: use the repository name for code projects or the folder name otherwise. text is the required nonblank memory content. Creates a new memory rather than updating an existing one and returns the saved memory record.",
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, openWorldHint = false)
+    )
+    public Mono<Memory> saveMemory(String appId, String text) {
+        return Mono.fromCallable(() -> memoryService.saveMemory(appId, text));
+    }
+
+    @McpTool(
+            description = "List a page of memories for an explicit full-project audit. appId is the required stable project namespace. cursor is optional: omit it for the first page, then pass the server-issued nextCursor unchanged for the next page. Returns memories ordered by createdAt then id and a nextCursor; each page contains at most " + MemoryService.DEFAULT_GET_MEMORIES_PAGE_SIZE + " memories. Stop when nextCursor is null. This read operation does not mutate memories.",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
+    )
+    public Mono<GetMemoriesPage> getMemories(String appId, @Nullable GetMemoriesCursor cursor) {
+        return Mono.fromCallable(() -> memoryService.getMemories(appId, cursor));
+    }
+
+    @McpTool(
+            description = "Permanently delete a memory by its required id. This is a destructive mutation. The current operation is not app-scoped, so callers must use the id returned by Recall for the intended memory.",
+            annotations = @McpTool.McpAnnotations(idempotentHint = true, openWorldHint = false)
+    )
+    public Mono<Void> deleteMemory(String id) {
+        return Mono.fromRunnable(() -> memoryService.deleteMemory(id));
+    }
+
+    @McpTool(
+            description = "Retrieve the closest memories for a semantic query within one project namespace. appId is the required stable project namespace, text is the required nonblank query, and topN is the requested result count from 0 through 1000. topN of 0 returns an empty result without retrieval work; positive values return up to topN closest memories in rank order. This read operation does not mutate memories.",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
+    )
+    public Mono<List<Memory>> getTopNClosest(String appId, String text, int topN) {
+        return Mono.fromCallable(() -> memoryService.getTopNClosest(appId, text, topN));
+    }
+}

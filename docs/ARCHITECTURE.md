@@ -18,6 +18,7 @@
 - The deployed MCP endpoint is `https://recall.abhiroop.dev/v1/mcp`.
 - Memory operations currently use MCP tools; there is no custom REST memory API.
 - MCP `initialize` responses publish harness-neutral guidance for using the memory tools.
+- `mcp/McpMemoryTools` is the reactive MCP transport adapter required by Spring AI's asynchronous MCP annotation provider; it delegates to the synchronous `MemoryService` application workflow.
 - The `/v1` URL namespace is independent of the MCP protocol version configured by
   `spring.ai.mcp.server.version`.
 
@@ -48,6 +49,7 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - The fixture clears Secret Manager import, disables Spring Cloud GCP auto-configuration, and excludes Google GenAI embedding auto-configuration; tests assert that no credentials provider, Firestore, or Google embedding-model beans are present.
 - The real Spring AI transport is covered cloud-free through authenticated MCP initialization, `tools/list`, and a deterministic `getMemories` call backed by the local repository substitute.
 - Cloud-free transport tests also cover JSON-RPC success contracts and server-issued pagination-cursor relay.
+- The real cloud-free `tools/list` response is regression-tested for the four tool names, input schemas, description fragments, and operation hints.
 - `./gradlew liveIntegrationTest` is an opt-in deployed pagination test: it requires a locally injected API key, ADC, and an explicit Firestore project ID. It seeds unique temporary documents directly in Firestore, verifies the deployed MCP endpoint, then removes and verifies its owned fixtures. It is excluded from Cloud Build.
 - `scripts/live-mcp-benchmark.sh` is reserved for sequential client-observed latency measurements, with only the isolation and cleanup checks needed to trust those measurements; it is neither a functional integration suite nor a load benchmark.
 
@@ -70,6 +72,11 @@ a nonblank `appId`, and retrieval requires nonblank `appId` and text before its 
 or embedding inference. The service deliberately has no proactive character limit until a concrete token- or byte-based
 contract requires one.
 
+`saveMemory(appId, text)` accepts direct required MCP arguments and creates a new memory. `getMemories` and
+`getTopNClosest` are read-only, idempotent, closed-world operations. `saveMemory` is additive, non-idempotent, and
+closed-world; `deleteMemory(id)` is destructive, idempotent, and closed-world. The current deletion operation remains
+unscoped by `appId` until the Day 15 migration.
+
 `getMemories(appId, cursor)` returns `GetMemoriesPage(memories, nextCursor)` with at most 10 memories and is reserved
 for explicit full-project audits. Results are ordered ascending by `createdAt`, then document ID. Omit `cursor` for
 the first page; pass the server-issued `nextCursor` unchanged as `cursor` for each subsequent page. Do not reconstruct
@@ -83,11 +90,14 @@ The opt-in `liveIntegrationTest` seeds 21 same-timestamp records with unique IDs
 
 The deployment requires two Firestore indexes: a vector index with `appId` ascending and a 1536-dimensional flat `embedding`, and an ordered listing index with `appId`, `createdAt`, and document ID ascending.
 
-MCP `initialize` instructions define the proposed-save contract for every client: select only durable candidate facts,
-retrieve the top 5-10 scoped candidates, then add the memory or remove redundant duplicates while retaining one canonical
-memory. For a clearly stale memory, save the replacement, confirm its returned ID, then separately delete the obsolete
-record. Reconcile an ambiguous save within the same app ID rather than blindly retrying; stop for audit if reconciliation
-is inconclusive. Preserve separate memories when uncertain and never store secrets or credentials. Recall deliberately does
+MCP `initialize` instructions require clients to retrieve task-scoped context before substantial work, using the task,
+affected subsystem, and prior decisions to form queries; refine unhelpful queries rather than listing the namespace.
+Memories are contextual evidence, so current code and explicit user instructions take precedence on conflict. After work,
+clients save only durable outcomes. The proposed-save contract requires selecting durable candidate facts, retrieving the
+top 5-10 scoped candidates, then adding the memory or removing redundant duplicates while retaining one canonical memory.
+For a clearly stale memory, save the replacement, confirm its returned ID, then separately delete the obsolete record.
+Reconcile an ambiguous save within the same app ID rather than blindly retrying; stop for audit if reconciliation is
+inconclusive. Preserve separate memories when uncertain and never store secrets or credentials. Recall deliberately does
 not run a backend fact-extraction pipeline, scheduled Cloud Run Job, or periodic full-namespace consolidation pass. A
 client-specific skill or prompt is optional reinforcement, not part of this server contract.
 

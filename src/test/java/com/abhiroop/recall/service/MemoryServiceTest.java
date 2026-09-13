@@ -1,8 +1,6 @@
 package com.abhiroop.recall.service;
 
-import com.abhiroop.recall.RecallApplication;
 import com.abhiroop.recall.dto.GetMemoriesCursor;
-import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.google.cloud.Timestamp;
@@ -23,13 +21,13 @@ import static org.mockito.Mockito.*;
 class MemoryServiceTest {
 
     @Test
-    void saveMemoryMapsDtoAndDelegatesToRepository() {
+    void saveMemoryMapsInputsAndDelegatesToRepository() {
         var repository = new FakeMemoryRepository();
         var embeddingModel = mock(EmbeddingModel.class);
         when(embeddingModel.embed("text")).thenReturn(new float[]{0.6f, 0.8f});
         var service = new MemoryService(repository, embeddingModel);
 
-        Memory saved = service.saveMemory(new SaveMemoryRequestDto("app", "text"));
+        Memory saved = service.saveMemory("app", "text");
 
         assertEquals("persisted-id", saved.id());
         assertEquals("app", repository.saved.appId());
@@ -45,9 +43,7 @@ class MemoryServiceTest {
         when(repository.save(any())).thenThrow(new IllegalStateException("save failed"));
         var service = new MemoryService(repository, embeddingModel);
 
-        final var request = new SaveMemoryRequestDto("app", "replacement");
-        
-        assertThrows(IllegalStateException.class, () -> service.saveMemory(request));
+        assertThrows(IllegalStateException.class, () -> service.saveMemory("app", "replacement"));
 
         verify(repository, never()).deleteById(any());
     }
@@ -60,11 +56,37 @@ class MemoryServiceTest {
         when(repository.save(any())).thenReturn(new Memory("replacement-id", "app", "replacement", null, null));
         var service = new MemoryService(repository, embeddingModel);
 
-        assertEquals("replacement-id", service.saveMemory(new SaveMemoryRequestDto("app", "replacement")).id());
+        assertEquals("replacement-id", service.saveMemory("app", "replacement").id());
         verify(repository, never()).deleteById(any());
 
         service.deleteMemory("obsolete-id");
         verify(repository).deleteById("obsolete-id");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void saveMemoryRejectsMissingOrBlankAppIdWithoutExternalWork(String appId) {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertThrows(IllegalArgumentException.class, () -> service.saveMemory(appId, "text"));
+
+        verifyNoInteractions(repository, embeddingModel);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void saveMemoryRejectsMissingOrBlankTextWithoutExternalWork(String text) {
+        var repository = mock(MemoryRepository.class);
+        var embeddingModel = mock(EmbeddingModel.class);
+        var service = new MemoryService(repository, embeddingModel);
+
+        assertThrows(IllegalArgumentException.class, () -> service.saveMemory("app", text));
+
+        verifyNoInteractions(repository, embeddingModel);
     }
 
     @Test
@@ -124,7 +146,7 @@ class MemoryServiceTest {
     }
 
     @Test
-    void getMemoriesToolRoundTripsServerCursorWithFullPrecision() {
+    void getMemoriesPreservesServerCursorWithFullPrecision() {
         var repository = new FakeMemoryRepository();
         var instant = Instant.parse("2026-09-05T12:34:56.123456789Z");
         var timestamp = Timestamp.ofTimeSecondsAndNanos(instant.getEpochSecond(), instant.getNano());
@@ -135,20 +157,17 @@ class MemoryServiceTest {
         assertSame(repository.memories, page.memories());
         assertEquals(new GetMemoriesCursor(instant, "id-9"), page.nextCursor());
 
-        var tool = java.util.Arrays.stream(new RecallApplication().memoryTools(service).getToolCallbacks())
-                .filter(callback -> callback.getToolDefinition().name().equals("getMemories"))
-                .findFirst().orElseThrow();
         var mapper = JsonMapper.builder().build();
-        var response = mapper.readTree(tool.call("{\"appId\":\"app\"}"));
+        var response = mapper.valueToTree(page);
         assertEquals(10, response.get("memories").size());
         assertEquals(instant.toString(), response.at("/nextCursor/afterCreatedAt").asString());
         assertEquals("id-9", response.at("/nextCursor/afterId").asString());
         repository.memories = List.of();
-        var lastPage = mapper.readTree(tool.call("{\"appId\":\"app\",\"cursor\":" + response.get("nextCursor") + "}"));
+        var lastPage = service.getMemories("app", mapper.treeToValue(response.get("nextCursor"), GetMemoriesCursor.class));
         assertEquals(timestamp, repository.afterCreatedAt);
         assertEquals("id-9", repository.afterId);
-        assertTrue(lastPage.get("memories").isEmpty());
-        assertTrue(lastPage.get("nextCursor").isNull());
+        assertTrue(lastPage.memories().isEmpty());
+        assertNull(lastPage.nextCursor());
     }
 
     @Test

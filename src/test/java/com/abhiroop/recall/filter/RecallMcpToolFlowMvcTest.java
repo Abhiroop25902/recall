@@ -14,9 +14,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -74,12 +77,29 @@ class RecallMcpToolFlowMvcTest {
                 .andExpect(jsonPath("$.result.serverInfo.name").value("recall-mcp"))
                 .andExpect(jsonPath("$.error").doesNotExist());
 
-        performMcpRequest(TOOLS_LIST_REQUEST)
+        JsonNode tools = OBJECT_MAPPER.readTree(performMcpRequest(TOOLS_LIST_REQUEST)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jsonrpc").value("2.0"))
                 .andExpect(jsonPath("$.id").value(2))
-                .andExpect(jsonPath("$.result.tools[?(@.name == 'getMemories')]").isNotEmpty())
-                .andExpect(jsonPath("$.error").doesNotExist());
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString()).at("/result/tools");
+
+        assertEquals(Set.of("saveMemory", "getMemories", "deleteMemory", "getTopNClosest"), toolNames(tools));
+        assertTool(tools, "saveMemory", "Save a new durable memory", Set.of("appId", "text"),
+                Set.of("appId", "text"), false, false, false);
+        assertTool(tools, "getMemories", "explicit full-project audit", Set.of("appId", "cursor"),
+                Set.of("appId"), true, false, true);
+        assertTool(tools, "deleteMemory", "Permanently delete a memory", Set.of("id"),
+                Set.of("id"), false, true, true);
+        assertTool(tools, "getTopNClosest", "semantic query", Set.of("appId", "text", "topN"),
+                Set.of("appId", "text", "topN"), true, false, true);
+        assertEquals("string", toolByName(tools, "saveMemory").at("/inputSchema/properties/appId/type").asText());
+        assertEquals("string", toolByName(tools, "saveMemory").at("/inputSchema/properties/text/type").asText());
+        assertEquals("object", toolByName(tools, "getMemories").at("/inputSchema/properties/cursor/type").asText());
+        assertEquals("string", toolByName(tools, "deleteMemory").at("/inputSchema/properties/id/type").asText());
+        assertEquals("integer", toolByName(tools, "getTopNClosest").at("/inputSchema/properties/topN/type").asText());
 
         performMcpRequest(GET_MEMORIES_REQUEST)
                 .andExpect(status().isOk())
@@ -173,5 +193,57 @@ class RecallMcpToolFlowMvcTest {
         return IntStream.range(0, page.withArray("memories").size())
                 .mapToObj(index -> page.withArray("memories").get(index).path("id").asText())
                 .toList();
+    }
+
+    private void assertTool(
+            JsonNode tools,
+            String name,
+            String descriptionFragment,
+            Set<String> properties,
+            Set<String> required,
+            boolean readOnly,
+            boolean destructive,
+            boolean idempotent
+    ) {
+        JsonNode tool = toolByName(tools, name);
+        assertTrue(tool.path("description").asText().contains(descriptionFragment));
+        assertEquals("object", tool.at("/inputSchema/type").asText());
+        assertEquals(properties, fieldNames(tool.at("/inputSchema/properties")));
+        assertEquals(required, stringValues(tool.at("/inputSchema/required")));
+        assertEquals(readOnly, tool.at("/annotations/readOnlyHint").asBoolean());
+        assertEquals(destructive, tool.at("/annotations/destructiveHint").asBoolean());
+        assertEquals(idempotent, tool.at("/annotations/idempotentHint").asBoolean());
+        assertFalse(tool.at("/annotations/openWorldHint").asBoolean());
+    }
+
+    private JsonNode toolByName(JsonNode tools, String name) {
+        for (JsonNode tool : tools) {
+            if (name.equals(tool.path("name").asText())) {
+                return tool;
+            }
+        }
+        throw new AssertionError("Missing tool: " + name);
+    }
+
+    private Set<String> toolNames(JsonNode tools) {
+        Set<String> names = new HashSet<>();
+        for (JsonNode tool : tools) {
+            names.add(tool.path("name").asText());
+        }
+        return names;
+    }
+
+    private Set<String> fieldNames(JsonNode object) {
+        Set<String> names = new HashSet<>();
+        object.fieldNames().forEachRemaining(names::add);
+        return names;
+    }
+
+    private Set<String> stringValues(JsonNode array) {
+        Set<String> values = new HashSet<>();
+        for (JsonNode value : array) {
+            values.add(value.asText());
+        }
+        return values;
     }
 }

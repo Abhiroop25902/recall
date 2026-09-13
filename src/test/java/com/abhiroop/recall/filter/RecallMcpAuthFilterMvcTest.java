@@ -128,6 +128,11 @@ class RecallMcpAuthFilterMvcTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.result.serverInfo.name").value("recall-mcp"))
                 .andExpect(jsonPath("$.result.instructions").value(org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("Before substantial project work"),
+                        org.hamcrest.Matchers.containsString("task, affected subsystem, and prior decisions"),
+                        org.hamcrest.Matchers.containsString("Refine unhelpful queries rather than listing the entire namespace"),
+                        org.hamcrest.Matchers.containsString("current code and explicit user instructions take precedence if they conflict"),
+                        org.hamcrest.Matchers.containsString("After completing work, save only durable outcomes"),
                         org.hamcrest.Matchers.containsString("save the replacement and confirm its returned ID before separately deleting the obsolete memory"),
                         org.hamcrest.Matchers.containsString("never blindly retry"),
                         org.hamcrest.Matchers.containsString("stop for audit if reconciliation is inconclusive")

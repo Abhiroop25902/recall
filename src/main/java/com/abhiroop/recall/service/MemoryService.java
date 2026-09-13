@@ -2,7 +2,6 @@ package com.abhiroop.recall.service;
 
 import com.abhiroop.recall.dto.GetMemoriesCursor;
 import com.abhiroop.recall.dto.GetMemoriesPage;
-import com.abhiroop.recall.dto.SaveMemoryRequestDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.abhiroop.recall.utils.ErrorStrings;
@@ -13,7 +12,6 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Floats;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +20,7 @@ import java.util.List;
 @Service
 public class MemoryService {
 
-    private static final int DEFAULT_GET_MEMORIES_PAGE_SIZE = 10;
+    public static final int DEFAULT_GET_MEMORIES_PAGE_SIZE = 10;
     private final MemoryRepository memoryRepository;
     private final EmbeddingModel embeddingModel;
 
@@ -32,11 +30,20 @@ public class MemoryService {
         this.embeddingModel = embeddingModel;
     }
 
-    @Tool(description = "Save Memory")
-    Memory saveMemory(SaveMemoryRequestDto dto) {
+    public Memory saveMemory(String appId, String text) {
+        if (appId == null || appId.isBlank())
+            throw new IllegalArgumentException(
+                    ErrorStrings.APP_ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+
+        if (text == null || text.isBlank())
+            throw new IllegalArgumentException(
+                    ErrorStrings.TEXT_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+
         //gemini-embedding-2 => the embedding is normalized for 1536
         //if for some reason we have to downgrade to gemini-embedding-001 have to manually normalize
-        final float[] embedding = embeddingModel.embed(dto.text());
+        final float[] embedding = embeddingModel.embed(text);
 
         final VectorValue embeddingVector = FieldValue.vector(
                 Doubles.toArray(Floats.asList(embedding))
@@ -44,8 +51,8 @@ public class MemoryService {
 
         final var memory = Memory
                 .builder()
-                .appId(dto.appId())
-                .text(dto.text())
+                .appId(appId)
+                .text(text)
                 .embedding(embeddingVector)
                 .createdAt(Timestamp.now())
                 .build();
@@ -54,8 +61,7 @@ public class MemoryService {
         return memoryRepository.save(memory);
     }
 
-    @Tool(description = "Get a page with memories (up to " + DEFAULT_GET_MEMORIES_PAGE_SIZE + ") and nextCursor, ordered by createdAt then id. Omit cursor for the first page; pass the server-issued nextCursor unchanged as cursor for the next page. Stop when nextCursor is null.")
-    GetMemoriesPage getMemories(
+    public GetMemoriesPage getMemories(
             String appId,
             @Nullable GetMemoriesCursor cursor
     ) {
@@ -90,13 +96,11 @@ public class MemoryService {
         );
     }
 
-    @Tool(description = "Delete a memory by id")
-    void deleteMemory(String id) {
+    public void deleteMemory(String id) {
         memoryRepository.deleteById(id);
     }
 
-    @Tool(description = "Get top n closest memories")
-    List<Memory> getTopNClosest(String appId, String text, int topN) {
+    public List<Memory> getTopNClosest(String appId, String text, int topN) {
         if (appId == null || appId.isBlank())
             throw new IllegalArgumentException(
                     ErrorStrings.APP_ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
