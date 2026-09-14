@@ -27,7 +27,7 @@
 - Firestore runs in Standard edition, Native mode, in `asia-southeast1`.
 - Cloud Run runs in `asia-southeast1` and uses an HTTP startup probe at `/v1/health`.
 - Deployments use their generated Cloud Run URL unless they independently configure a custom domain.
-- Eligible pushes to `main` deploy through the repository `cloudbuild.yaml`. Its Java 25 test step runs `./gradlew test` before Buildpack; a failed test prevents image build and deployment. The trigger ignores documentation-only changes matching `docs/**`, `graphify-out/**`, and `**/*.md`.
+- Eligible pushes to `main` deploy through the repository `cloudbuild.yaml`. Its Java 25 test step runs `./gradlew test` before Buildpack; a failed test prevents image build and deployment. The trigger ignores changes affecting only documentation, graph output, shell scripts, OpenCode configuration, or test sources (`docs/**`, `graphify-out/**`, `**/*.md`, `**/*.sh`, `.opencode/*`, `src/test/**`, and `src/integrationTest/**`). Application and build changes still run the latest cloud-free tests before deployment.
 
 ## Product target
 
@@ -50,7 +50,8 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - The real Spring AI transport is covered cloud-free through authenticated MCP initialization, `tools/list`, and a deterministic `getMemories` call backed by the local repository substitute.
 - Cloud-free transport tests also cover JSON-RPC success contracts and server-issued pagination-cursor relay.
 - The real cloud-free `tools/list` response is regression-tested for the four tool names, input schemas, description fragments, and operation hints.
-- `./gradlew liveIntegrationTest` is an opt-in deployed pagination test: it requires a locally injected API key, ADC, and an explicit Firestore project ID. It seeds unique temporary documents directly in Firestore, verifies the deployed MCP endpoint, then removes and verifies its owned fixtures. It is excluded from Cloud Build.
+- Cloud-free tests are in `src/test`; opt-in deployed tests are isolated in the Gradle `integrationTest` source set at `src/integrationTest`.
+- `./gradlew liveIntegrationTest` runs the `live`-tagged deployed pagination test from `src/integrationTest`: it requires a locally injected API key, ADC, and an explicit Firestore project ID. It seeds unique temporary documents directly in Firestore, verifies the deployed MCP endpoint, then removes and verifies its owned fixtures. It is excluded from the default test task and Cloud Build.
 - `scripts/live-mcp-benchmark.sh` is reserved for sequential client-observed latency measurements, with only the isolation and cleanup checks needed to trust those measurements; it is neither a functional integration suite nor a load benchmark.
 
 ## Memory model

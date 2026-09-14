@@ -286,8 +286,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [x] **Task 11.5a: Cover MCP pagination contracts in cloud-free Java tests** *(Codex)*
      - Exercise real WebMVC MCP JSON-RPC success contracts, server-issued cursor relay, deterministic ordering, page boundaries, invalid cursors, and app isolation without Google Cloud services.
 - [x] **Task 11.5b: Add an opt-in Java deployed pagination integration test** *(Codex)*
-     - Add a separate `liveIntegrationTest` Gradle task, excluded from Cloud Build and the default test suite.
-     - Require local `$RECALL_API_KEY`, ADC, and explicit `RECALL_GCP_PROJECT_ID`; seed unique owned Firestore fixtures, call the deployed MCP endpoint, reconcile cleanup, and verify all owned records are absent.
+      - Add a separate `liveIntegrationTest` Gradle task, excluded from Cloud Build and the default test suite.
+      - Require local `$RECALL_API_KEY`, ADC, and explicit `RECALL_GCP_PROJECT_ID`; seed unique owned Firestore fixtures, call the deployed MCP endpoint, reconcile cleanup, and verify all owned records are absent.
+      - The deployed test is isolated in Gradle's `integrationTest` source set at `src/integrationTest`; `liveIntegrationTest` retains its `live` tag filter as a second opt-in guard. The Cloud Build deployment trigger ignores test-only source changes, so application and build changes remain responsible for running the latest cloud-free suite before deployment.
 - [x] **Task 11.5c: Retire the pagination shell test** *(Codex; after Task 11.5b live verification)*
      - Remove `scripts/live-mcp-pagination-test.sh` after the Java deployed integration test has passed against the target deployment.
 - [x] **Task 11.5d: Restrict and label benchmark observations** *(Codex)*
