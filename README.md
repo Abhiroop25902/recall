@@ -51,12 +51,10 @@ load balancers are not required.
 |---------------------|------------------------------------------------------------------------|
 | Firestore           | Standard edition, Native mode, `asia-southeast1`                       |
 | Cloud Run           | `asia-southeast1`                                                      |
-| Public health check | [recall.abhiroop.dev/v1/health](https://recall.abhiroop.dev/v1/health) |
 
 These are my deployment choices, not requirements for self-hosting. I kept both
-services in `asia-southeast1` because it supports Cloud Run domain mapping and is
-the closest supported region to me in India. I use `recall.abhiroop.dev` for Recall.
-`/v1/health` is intentionally public; the MCP endpoint at `/v1/mcp` requires
+services in `asia-southeast1` because it is the closest supported region to me in
+India. `/v1/health` is intentionally public; the MCP endpoint at `/v1/mcp` requires
 `Authorization: Bearer <RECALL_API_KEY>`. Custom domains are outside this minimal
 guide.
 

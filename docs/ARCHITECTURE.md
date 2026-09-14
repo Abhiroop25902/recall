@@ -15,7 +15,7 @@
 
 - `GET /v1/health` returns the service health response.
 - `/v1/mcp` is the stateless Streamable HTTP MCP endpoint that exposes memory tools.
-- The deployed MCP endpoint is `https://recall.abhiroop.dev/v1/mcp`.
+- Deployed clients connect to the Cloud Run service URL at `/v1/mcp`.
 - Memory operations currently use MCP tools; there is no custom REST memory API.
 - MCP `initialize` responses publish harness-neutral guidance for using the memory tools.
 - `mcp/McpMemoryTools` is the reactive MCP transport adapter required by Spring AI's asynchronous MCP annotation provider; it delegates to the synchronous `MemoryService` application workflow.
@@ -26,7 +26,7 @@
 
 - Firestore runs in Standard edition, Native mode, in `asia-southeast1`.
 - Cloud Run runs in `asia-southeast1` and uses an HTTP startup probe at `/v1/health`.
-- The owner deployment is served at `https://recall.abhiroop.dev`; self-hosted deployments use their generated Cloud Run URL unless they independently configure a custom domain.
+- Deployments use their generated Cloud Run URL unless they independently configure a custom domain.
 - Eligible pushes to `main` deploy through the repository `cloudbuild.yaml`. Its Java 25 test step runs `./gradlew test` before Buildpack; a failed test prevents image build and deployment. The trigger ignores documentation-only changes matching `docs/**`, `graphify-out/**`, and `**/*.md`.
 
 ## Product target

@@ -45,7 +45,7 @@ save_memory() {
     local payload id
 
     payload="$(jq -cn --arg appId "$app_id" --arg text "$text" --argjson id "$sequence" \
-        '{jsonrpc:"2.0", id:$id, method:"tools/call", params:{name:"saveMemory", arguments:{dto:{appId:$appId, text:$text}}}}')"
+        '{jsonrpc:"2.0", id:$id, method:"tools/call", params:{name:"saveMemory", arguments:{appId:$appId, text:$text}}}')"
     tool_call "$operation" "$sequence" "$payload"
     id="$(jq -er '.result.content[0].text | fromjson | .id' <<< "$CALL_RESPONSE")"
     CREATED_IDS+=("$id")
@@ -55,7 +55,8 @@ cleanup() {
     local id app_id payload response cleanup_failed=0
     set +e
 
-    for id in "${CREATED_IDS[@]}"; do
+    for id in "${CREATED_IDS[@]-}"; do
+        [[ -z "$id" ]] && continue
         payload="$(jq -cn --arg id "$id" '{jsonrpc:"2.0", id:999, method:"tools/call", params:{name:"deleteMemory", arguments:{id:$id}}}')"
         curl --silent --show-error --fail --max-time 30 --output /dev/null \
             --request POST "$URL" \
