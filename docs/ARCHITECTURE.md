@@ -70,7 +70,9 @@ stored embedding from MCP responses.
 
 All memory tool inputs are validated before external work: saving requires nonblank `appId` and text, listing requires
 a nonblank `appId`, and retrieval requires nonblank `appId` and text before its `topN == 0` shortcut, Firestore count,
-or embedding inference. The service deliberately has no proactive character limit until a concrete token- or byte-based
+or embedding inference. Deletion requires a nonblank ID before repository work. At the MCP transport, schema-invalid
+tool arguments produce a `result.isError` response; a blank deletion ID produces a JSON-RPC execution error (`-32603`),
+while malformed JSON produces HTTP `400` with a JSON-RPC invalid-message error (`-32600`). The service deliberately has no proactive character limit until a concrete token- or byte-based
 contract requires one.
 
 `saveMemory(appId, text)` accepts direct required MCP arguments and creates a new memory. `getMemories` and
@@ -89,6 +91,7 @@ the first page; pass the server-issued `nextCursor` unchanged as `cursor` for ea
 the cursor from memory timestamps. A supplied cursor requires an ISO-8601 `afterCreatedAt` Instant and a nonblank `afterId`.
 The service issues a cursor from the last record of a full page using `Timestamp.toSqlTimestamp().toInstant()` and
 converts it back without losing nanoseconds; the repository applies exclusive `startAfter(timestamp, id)`.
+The listing query projects only document ID, `appId`, `text`, and `createdAt`; it does not read stored embeddings.
 Stop when `nextCursor` is null (empty or short page); an exact multiple of 10 requires a final empty-page request.
 Read all pages before proposing audit cleanup. Pagination is not a snapshot: concurrent writes and deletes may affect results.
 The ordered query requires a suitable Firestore index for the `appId` filter and `createdAt`/document-ID ordering.

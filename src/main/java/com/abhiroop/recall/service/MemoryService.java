@@ -98,6 +98,12 @@ public class MemoryService {
     }
 
     public void deleteMemory(String id) {
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException(
+                    ErrorStrings.ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
+            );
+        }
+
         memoryRepository.deleteById(id);
     }
 

@@ -354,16 +354,19 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
      - Verified locally (2026-09-14): cloud-free real MCP save, list, and search calls use `MemoryResponseDto` with only
        `id`, `appId`, `text`, and ISO-8601 nanosecond-precise `createdAt`; a nonempty Firestore vector fixture confirms
        `embedding` is absent. Existing service mapping tests and pagination-cursor relay tests pass.
-- [ ] **Task 12.4a: Exclude embeddings from Firestore listing reads** *(user)*
+- [x] **Task 12.4a: Exclude embeddings from Firestore listing reads** *(user)*
     - Add a minimal listing projection while preserving app filtering, timestamp/document-ID ordering, limit, and cursor behavior.
     - Done when listing retrieves only the fields needed for public responses and pagination.
-- [ ] **Task 12.4b: Verify the listing projection** *(Codex; after Task 12.4a)*
+    - Verified locally (2026-09-15): `FirestoreMemoryRepository.findByAppId` projects document ID, `appId`, `text`, and `createdAt`; it does not read `embedding`.
+- [x] **Task 12.4b: Verify the listing projection** *(Codex; after Task 12.4a)*
     - Update repository query-chain coverage to assert projected fields and unchanged ordering/continuation behavior.
     - Run the focused repository and pagination tests without cloud services.
-- [ ] **Task 12.5a: Cover invalid tool arguments over MCP** *(Codex; after Task 12.3e)*
+    - Verified locally (2026-09-15): `FirestoreMemoryRepositoryTest` asserts the projection and the app filter, `createdAt`/document-ID ordering, limit, and optional `startAfter` chain. `./gradlew test` passed.
+- [x] **Task 12.5a: Cover invalid tool arguments over MCP** *(Codex; after Task 12.3e)*
     - Cover invalid save/search inputs, `topN` bounds, malformed cursors, and blank delete IDs through the real transport.
     - Assert useful error outcomes and no external work for rejected inputs; distinguish tool failures from malformed JSON-RPC requests.
     - If observed behavior needs an application fix, record the failing case as a user-owned handoff before marking this task complete.
+    - Verified locally (2026-09-15): `MemoryService.deleteMemory` now rejects null or blank IDs before repository work. Cloud-free real-MCP coverage asserts missing/null/blank tool inputs, `topN` bounds, incomplete cursors, zero repository/embedding interactions, and the distinct malformed-JSON-RPC response. Focused `RecallMcpToolFlowMvcTest` and `./gradlew test` with common Google/ADC environment variables unset passed.
 - [ ] **Task 12.5b: Cover dependency failures over MCP** *(Codex; after Task 12.5a)*
     - Simulate embedding and repository failures using local substitutes.
     - Verify the intended MCP tool-error representation and useful messages, rather than a successful empty result; do not expose raw provider details.

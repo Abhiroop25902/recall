@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.Timestamp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,9 +24,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -205,6 +210,51 @@ class RecallMcpToolFlowMvcTest {
         assertPublicMemory(search.get(0), createdAt);
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("invalidToolCalls")
+    void realMcpRejectsInvalidToolArgumentsBeforeExternalWork(
+            String description,
+            String request,
+            String expectedMessage
+    ) throws Exception {
+        JsonNode response = toolErrorResponse(request);
+
+        assertTrue(response.at("/result/content/0/text").asText().contains(expectedMessage));
+        verifyNoInteractions(memoryRepository, embeddingModel);
+    }
+
+    @Test
+    void malformedJsonRpcRequestIsAProtocolErrorRatherThanAToolError() throws Exception {
+        String response = performMcpRequest("{" )
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode root = OBJECT_MAPPER.readTree(response);
+        assertEquals(-32600, root.at("/jsonRpcError/code").asInt());
+        assertEquals("Invalid message format", root.at("/jsonRpcError/message").asText());
+        assertFalse(root.has("result"));
+    }
+
+    @Test
+    void blankDeleteIdIsAnExecutionErrorBeforeRepositoryWork() throws Exception {
+        String response = performMcpRequest("""
+                {"jsonrpc":"2.0","id":49,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":" "}}}
+                """)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jsonrpc").value("2.0"))
+                .andExpect(jsonPath("$.error.code").value(-32603))
+                .andExpect(jsonPath("$.error.message").value("id must be present and must not be blank"))
+                .andExpect(jsonPath("$.result").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertEquals("id must be present and must not be blank", OBJECT_MAPPER.readTree(response).at("/error/message").asText());
+        verifyNoInteractions(memoryRepository, embeddingModel);
+    }
+
     private org.springframework.test.web.servlet.ResultActions performMcpRequest(String request) throws Exception {
         return mockMvc.perform(post("/v1/mcp")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer test-api-key")
@@ -236,6 +286,81 @@ class RecallMcpToolFlowMvcTest {
                 .getContentAsString();
 
         return OBJECT_MAPPER.readTree(OBJECT_MAPPER.readTree(response).at("/result/content/0/text").asText());
+    }
+
+    private JsonNode toolErrorResponse(String request) throws Exception {
+        String response = performMcpRequest(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jsonrpc").value("2.0"))
+                .andExpect(jsonPath("$.result.isError").value(true))
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return OBJECT_MAPPER.readTree(response);
+    }
+
+    private static Stream<Arguments> invalidToolCalls() {
+        return Stream.of(
+                Arguments.of("saveMemory missing appId", """
+                        {"jsonrpc":"2.0","id":30,"method":"tools/call","params":{"name":"saveMemory","arguments":{"text":"memory"}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("saveMemory null appId", """
+                        {"jsonrpc":"2.0","id":31,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":null,"text":"memory"}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("saveMemory blank appId", """
+                        {"jsonrpc":"2.0","id":32,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":" ","text":"memory"}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("saveMemory missing text", """
+                        {"jsonrpc":"2.0","id":33,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app"}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("saveMemory null text", """
+                        {"jsonrpc":"2.0","id":34,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":null}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("saveMemory blank text", """
+                        {"jsonrpc":"2.0","id":35,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":" "}}}
+                        """, "text must be present and must not be blank"),
+                Arguments.of("getMemories missing appId", """
+                        {"jsonrpc":"2.0","id":36,"method":"tools/call","params":{"name":"getMemories","arguments":{}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getMemories null appId", """
+                        {"jsonrpc":"2.0","id":37,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":null}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getMemories blank appId", """
+                        {"jsonrpc":"2.0","id":38,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":" "}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("getMemories incomplete cursor", """
+                        {"jsonrpc":"2.0","id":39,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":"app","cursor":{"afterCreatedAt":"2026-09-15T00:00:00Z"}}}}
+                        """, "required property 'afterId' not found"),
+                Arguments.of("getTopNClosest missing appId", """
+                        {"jsonrpc":"2.0","id":40,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"text":"query","topN":1}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getTopNClosest blank appId", """
+                        {"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":" ","text":"query","topN":1}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("getTopNClosest missing text", """
+                        {"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","topN":1}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("getTopNClosest null text", """
+                        {"jsonrpc":"2.0","id":43,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":null,"topN":1}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("getTopNClosest blank text", """
+                        {"jsonrpc":"2.0","id":44,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":" ","topN":1}}}
+                        """, "text must be present and must not be blank"),
+                Arguments.of("getTopNClosest negative topN", """
+                        {"jsonrpc":"2.0","id":45,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":-1}}}
+                        """, "topN must be between 1 and 1000"),
+                Arguments.of("getTopNClosest excessive topN", """
+                        {"jsonrpc":"2.0","id":46,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":1001}}}
+                        """, "topN must be between 1 and 1000"),
+                Arguments.of("deleteMemory missing id", """
+                        {"jsonrpc":"2.0","id":47,"method":"tools/call","params":{"name":"deleteMemory","arguments":{}}}
+                        """, "required property 'id' not found"),
+                Arguments.of("deleteMemory null id", """
+                        {"jsonrpc":"2.0","id":48,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":null}}}
+                        """, "required property 'id' not found")
+        );
     }
 
     private void assertPublicMemory(JsonNode memory, Timestamp createdAt) {
