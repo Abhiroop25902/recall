@@ -6,7 +6,9 @@ import com.abhiroop.recall.support.CloudFreeMcpTestConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.Timestamp;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +63,14 @@ class RecallMcpToolFlowMvcTest {
     @Autowired
     private MemoryRepository memoryRepository;
 
+    @Autowired
+    private EmbeddingModel embeddingModel;
+
+    @BeforeEach
+    void clearMockInteractions() {
+        org.mockito.Mockito.clearInvocations(memoryRepository, embeddingModel);
+    }
+
     @Test
     void authenticatedClientCanInitializeDiscoverAndCallRealMcpTools() throws Exception {
         when(memoryRepository.findByAppId("test-app", 10, null, null))
@@ -87,13 +98,13 @@ class RecallMcpToolFlowMvcTest {
                 .getContentAsString()).at("/result/tools");
 
         assertEquals(Set.of("saveMemory", "getMemories", "deleteMemory", "getTopNClosest"), toolNames(tools));
-        assertTool(tools, "saveMemory", "Save a new durable memory", Set.of("appId", "text"),
+        assertTool(tools, "saveMemory", "The response contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded.", Set.of("appId", "text"),
                 Set.of("appId", "text"), false, false, false);
-        assertTool(tools, "getMemories", "explicit full-project audit", Set.of("appId", "cursor"),
+        assertTool(tools, "getMemories", "Each memory contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded.", Set.of("appId", "cursor"),
                 Set.of("appId"), true, false, true);
         assertTool(tools, "deleteMemory", "Permanently delete a memory", Set.of("id"),
                 Set.of("id"), false, true, true);
-        assertTool(tools, "getTopNClosest", "semantic query", Set.of("appId", "text", "topN"),
+        assertTool(tools, "getTopNClosest", "Each memory contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded.", Set.of("appId", "text", "topN"),
                 Set.of("appId", "text", "topN"), true, false, true);
         assertEquals("string", toolByName(tools, "saveMemory").at("/inputSchema/properties/appId/type").asText());
         assertEquals("string", toolByName(tools, "saveMemory").at("/inputSchema/properties/text/type").asText());
@@ -159,6 +170,41 @@ class RecallMcpToolFlowMvcTest {
         verify(memoryRepository).findByAppId("pagination-app", 10, createdAt, "memory-19");
     }
 
+    @Test
+    void realMcpMemoryResponsesExposeOnlyPublicFieldsWithNanosecondTimestamps() throws Exception {
+        Timestamp createdAt = Timestamp.ofTimeSecondsAndNanos(1_700_000_000L, 123_456_789);
+        Memory memory = Memory.builder()
+                .id("memory-1")
+                .appId("test-app")
+                .text("public memory")
+                .embedding(com.google.cloud.firestore.FieldValue.vector(new double[]{0.6, 0.8}))
+                .createdAt(createdAt)
+                .build();
+
+        when(embeddingModel.embed("public memory")).thenReturn(new float[]{0.6f, 0.8f});
+        when(embeddingModel.embed("find public memory")).thenReturn(new float[]{0.6f, 0.8f});
+        when(memoryRepository.save(org.mockito.ArgumentMatchers.any(Memory.class))).thenReturn(memory);
+        when(memoryRepository.findByAppId("test-app", 10, null, null)).thenReturn(List.of(memory));
+        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(memoryRepository.findNearestN(org.mockito.ArgumentMatchers.eq("test-app"), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(1)))
+                .thenReturn(List.of(memory));
+
+        JsonNode save = toolResult("""
+                {"jsonrpc":"2.0","id":20,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"test-app","text":"public memory"}}}
+                """);
+        JsonNode page = toolResult("""
+                {"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":"test-app"}}}
+                """);
+        JsonNode search = toolResult("""
+                {"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"test-app","text":"find public memory","topN":1}}}
+                """);
+
+        assertPublicMemory(save, createdAt);
+        assertPublicMemory(page.at("/memories/0"), createdAt);
+        assertTrue(page.has("nextCursor"));
+        assertPublicMemory(search.get(0), createdAt);
+    }
+
     private org.springframework.test.web.servlet.ResultActions performMcpRequest(String request) throws Exception {
         return mockMvc.perform(post("/v1/mcp")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer test-api-key")
@@ -176,10 +222,13 @@ class RecallMcpToolFlowMvcTest {
                         {"jsonrpc":"2.0","id":%d,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":"pagination-app","cursor":%s}}}
                         """.formatted(requestId, cursor);
 
+        return toolResult(request);
+    }
+
+    private JsonNode toolResult(String request) throws Exception {
         String response = performMcpRequest(request)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jsonrpc").value("2.0"))
-                .andExpect(jsonPath("$.id").value(requestId))
                 .andExpect(jsonPath("$.result.isError").value(false))
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andReturn()
@@ -187,6 +236,15 @@ class RecallMcpToolFlowMvcTest {
                 .getContentAsString();
 
         return OBJECT_MAPPER.readTree(OBJECT_MAPPER.readTree(response).at("/result/content/0/text").asText());
+    }
+
+    private void assertPublicMemory(JsonNode memory, Timestamp createdAt) {
+        assertEquals(Set.of("id", "appId", "text", "createdAt"), fieldNames(memory));
+        assertEquals("memory-1", memory.path("id").asText());
+        assertEquals("test-app", memory.path("appId").asText());
+        assertEquals("public memory", memory.path("text").asText());
+        assertEquals(Instant.ofEpochSecond(createdAt.getSeconds(), createdAt.getNanos()).toString(), memory.path("createdAt").asText());
+        assertFalse(memory.has("embedding"));
     }
 
     private List<String> memoryIds(JsonNode page) {

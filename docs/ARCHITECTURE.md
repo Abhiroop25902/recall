@@ -77,6 +77,11 @@ contract requires one.
 closed-world; `deleteMemory(id)` is destructive, idempotent, and closed-world. The current deletion operation remains
 unscoped by `appId` until the Day 15 migration.
 
+All successful save, list, and retrieval MCP responses use the public `MemoryResponseDto`: `id`, `appId`, `text`, and
+`createdAt`. `createdAt` is an ISO-8601 `Instant` and preserves Firestore timestamp nanoseconds. Firestore's
+`VectorValue` embedding and `Timestamp` types remain inside the application persistence boundary and never appear in
+MCP response payloads.
+
 `getMemories(appId, cursor)` returns `GetMemoriesPage(memories, nextCursor)` with at most 10 memories and is reserved
 for explicit full-project audits. Results are ordered ascending by `createdAt`, then document ID. Omit `cursor` for
 the first page; pass the server-issued `nextCursor` unchanged as `cursor` for each subsequent page. Do not reconstruct

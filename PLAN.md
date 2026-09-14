@@ -334,22 +334,25 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Assert all four tools' names, required arguments, parameter types, meaningful descriptions, and supported hints through real MCP `tools/list`.
     - Done when the cloud-free discovery test catches missing or incorrectly advertised tool contracts.
     - Verified locally (2026-09-14): real `tools/list` coverage locks down the four tool names, input schemas, descriptions, and operation hints. `saveMemory` takes direct `appId` and `text` arguments; the internal `SaveMemoryRequestDto` was removed and validation remains in `MemoryService`.
-- [ ] **Task 12.3a: Inspect current serialization and choose the response contract** *(user)*
+- [x] **Task 12.3a: Inspect current serialization and choose the response contract** *(user)*
     - Inspect actual save/list/search serialization with a nonempty vector fixture; numeric-vector emission into MCP responses was not established by the review.
     - Specify a public DTO with `id`, `appId`, `text`, and ISO-8601 `createdAt`, excluding embeddings and preserving nanosecond precision.
     - Done when the target shape and any timestamp/client compatibility changes are recorded in `docs/ARCHITECTURE.md`.
-- [ ] **Task 12.3b: Use the public DTO for save responses** *(user; after Task 12.3a)*
+- [x] **Task 12.3b: Use the public DTO for save responses** *(user; after Task 12.3a)*
     - Add the DTO and mapping, then return it from `saveMemory` while retaining the persistence entity inside the service/repository boundary.
     - Done when saving still returns the persisted ID with only the agreed public fields.
-- [ ] **Task 12.3c: Verify real-MCP save responses** *(Codex; after Task 12.3b)*
+- [x] **Task 12.3c: Verify real-MCP save responses** *(Codex; after Task 12.3b)*
     - Exercise save through WebMVC with local embedding/repository substitutes and a nonempty vector fixture.
     - Assert persisted ID, public fields, precise timestamp serialization, and absence of an embedding field.
-- [ ] **Task 12.3d: Use public DTOs for listing and search** *(user; after Task 12.3c)*
+- [x] **Task 12.3d: Use public DTOs for listing and search** *(user; after Task 12.3c)*
     - Map listing pages and nearest-neighbor results to public DTOs.
     - Preserve the existing page envelope, server-issued cursor, result order, and memory identity fields.
-- [ ] **Task 12.3e: Verify listing and search response contracts** *(Codex; after Task 12.3d)*
-    - Assert public fields and absence of embeddings through real MCP listing and search calls.
-    - Verify search delegation and empty results, plus nanosecond-preserving pagination cursor relay.
+- [x] **Task 12.3e: Verify listing and search response contracts** *(Codex; after Task 12.3d)*
+     - Assert public fields and absence of embeddings through real MCP listing and search calls.
+     - Verify search delegation and empty results, plus nanosecond-preserving pagination cursor relay.
+     - Verified locally (2026-09-14): cloud-free real MCP save, list, and search calls use `MemoryResponseDto` with only
+       `id`, `appId`, `text`, and ISO-8601 nanosecond-precise `createdAt`; a nonempty Firestore vector fixture confirms
+       `embedding` is absent. Existing service mapping tests and pagination-cursor relay tests pass.
 - [ ] **Task 12.4a: Exclude embeddings from Firestore listing reads** *(user)*
     - Add a minimal listing projection while preserving app filtering, timestamp/document-ID ordering, limit, and cursor behavior.
     - Done when listing retrieves only the fields needed for public responses and pagination.

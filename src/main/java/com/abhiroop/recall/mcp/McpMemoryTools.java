@@ -2,7 +2,7 @@ package com.abhiroop.recall.mcp;
 
 import com.abhiroop.recall.dto.GetMemoriesCursor;
 import com.abhiroop.recall.dto.GetMemoriesPage;
-import com.abhiroop.recall.entity.Memory;
+import com.abhiroop.recall.dto.MemoryResponseDto;
 import com.abhiroop.recall.service.MemoryService;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -21,15 +21,18 @@ public class McpMemoryTools {
     }
 
     @McpTool(
-            description = "Save a new durable memory. appId is the required stable project namespace: use the repository name for code projects or the folder name otherwise. text is the required nonblank memory content. Creates a new memory rather than updating an existing one and returns the saved memory record.",
+            description = "Save a new durable memory. appId is the required stable project namespace: use the repository name for code projects or the folder name otherwise. text is the required nonblank memory content. Creates a new memory rather than updating an existing one. The response contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded.",
             annotations = @McpTool.McpAnnotations(destructiveHint = false, openWorldHint = false)
     )
-    public Mono<Memory> saveMemory(String appId, String text) {
-        return Mono.fromCallable(() -> memoryService.saveMemory(appId, text));
+    public Mono<MemoryResponseDto> saveMemory(String appId, String text) {
+        return Mono.fromCallable(() ->
+                MemoryResponseDto.fromMemory(
+                        memoryService.saveMemory(appId, text)
+                ));
     }
 
     @McpTool(
-            description = "List a page of memories for an explicit full-project audit. appId is the required stable project namespace. cursor is optional: omit it for the first page, then pass the server-issued nextCursor unchanged for the next page. Returns memories ordered by createdAt then id and a nextCursor; each page contains at most " + MemoryService.DEFAULT_GET_MEMORIES_PAGE_SIZE + " memories. Stop when nextCursor is null. This read operation does not mutate memories.",
+            description = "List a page of memories for an explicit full-project audit. appId is the required stable project namespace. cursor is optional: omit it for the first page, then pass the server-issued nextCursor unchanged for the next page. Returns memories ordered by createdAt then id and a nextCursor; each page contains at most " + MemoryService.DEFAULT_GET_MEMORIES_PAGE_SIZE + " memories. Each memory contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded. Stop when nextCursor is null. This read operation does not mutate memories.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
     )
     public Mono<GetMemoriesPage> getMemories(String appId, @Nullable GetMemoriesCursor cursor) {
@@ -45,10 +48,10 @@ public class McpMemoryTools {
     }
 
     @McpTool(
-            description = "Retrieve the closest memories for a semantic query within one project namespace. appId is the required stable project namespace, text is the required nonblank query, and topN is the requested result count from 0 through 1000. topN of 0 returns an empty result without retrieval work; positive values return up to topN closest memories in rank order. This read operation does not mutate memories.",
+            description = "Retrieve the closest memories for a semantic query within one project namespace. appId is the required stable project namespace, text is the required nonblank query, and topN is the requested result count from 0 through 1000. topN of 0 returns an empty result without retrieval work; positive values return up to topN closest memories in rank order. Each memory contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded. This read operation does not mutate memories.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
     )
-    public Mono<List<Memory>> getTopNClosest(String appId, String text, int topN) {
+    public Mono<List<MemoryResponseDto>> getTopNClosest(String appId, String text, int topN) {
         return Mono.fromCallable(() -> memoryService.getTopNClosest(appId, text, topN));
     }
 }

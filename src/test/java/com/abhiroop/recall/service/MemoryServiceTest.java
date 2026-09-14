@@ -1,6 +1,7 @@
 package com.abhiroop.recall.service;
 
 import com.abhiroop.recall.dto.GetMemoriesCursor;
+import com.abhiroop.recall.dto.MemoryResponseDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.google.cloud.Timestamp;
@@ -92,12 +93,12 @@ class MemoryServiceTest {
     @Test
     void getMemoriesWithNullCursorRequestsFirstPageOfTen() {
         var repository = new FakeMemoryRepository();
-        var expected = List.of(new Memory(null, "app", "text", null, null));
-        repository.memories = expected;
+        var createdAt = Timestamp.ofTimeSecondsAndNanos(1_700_000_000L, 123_456_789);
+        repository.memories = List.of(new Memory("memory-id", "app", "text", null, createdAt));
         var service = new MemoryService(repository, mock(EmbeddingModel.class));
 
         var page = service.getMemories("app", null);
-        assertSame(expected, page.memories());
+        assertEquals(List.of(memoryResponse("memory-id", "app", "text", createdAt)), page.memories());
         assertNull(page.nextCursor());
         assertEquals("app", repository.requestedAppId);
         assertEquals(10, repository.requestedPageSize);
@@ -108,14 +109,14 @@ class MemoryServiceTest {
     @Test
     void getMemoriesWithCursorPreservesExactNanoseconds() {
         var repository = new FakeMemoryRepository();
-        var expected = List.of(new Memory("next-id", "app", "text", null, null));
-        repository.memories = expected;
+        var createdAt = Timestamp.ofTimeSecondsAndNanos(1_700_000_000L, 123_456_789);
+        repository.memories = List.of(new Memory("next-id", "app", "text", null, createdAt));
         var service = new MemoryService(repository, mock(EmbeddingModel.class));
         var instant = Instant.parse("2026-09-05T12:34:56.123456789Z");
         var cursor = new GetMemoriesCursor(instant, "previous-id");
 
         var page = service.getMemories("app", cursor);
-        assertSame(expected, page.memories());
+        assertEquals(List.of(memoryResponse("next-id", "app", "text", createdAt)), page.memories());
         assertNull(page.nextCursor());
         assertEquals("app", repository.requestedAppId);
         assertEquals(10, repository.requestedPageSize);
@@ -154,7 +155,12 @@ class MemoryServiceTest {
                 .mapToObj(i -> new Memory("id-" + i, "app", "text", null, timestamp)).toList();
         var service = new MemoryService(repository, mock(EmbeddingModel.class));
         var page = service.getMemories("app", null);
-        assertSame(repository.memories, page.memories());
+        assertEquals(
+                repository.memories.stream()
+                        .map(memory -> memoryResponse(memory.id(), memory.appId(), memory.text(), timestamp))
+                        .toList(),
+                page.memories()
+        );
         assertEquals(new GetMemoriesCursor(instant, "id-9"), page.nextCursor());
 
         var mapper = JsonMapper.builder().build();
@@ -244,16 +250,25 @@ class MemoryServiceTest {
     void getTopNClosestDelegatesProviderEmbeddingToRepository() {
         var repository = new FakeMemoryRepository();
         repository.memoryCount = 1;
-        var expected = List.of(new Memory("memory-id", "app", "memory", null, null));
-        repository.nearestMemories = expected;
+        var createdAt = Timestamp.ofTimeSecondsAndNanos(1_700_000_000L, 123_456_789);
+        repository.nearestMemories = List.of(new Memory("memory-id", "app", "memory", null, createdAt));
         var embeddingModel = mock(EmbeddingModel.class);
         when(embeddingModel.embed("text")).thenReturn(new float[]{0.6f, 0.8f});
         var service = new MemoryService(repository, embeddingModel);
 
-        assertSame(expected, service.getTopNClosest("app", "text", 3));
+        assertEquals(List.of(memoryResponse("memory-id", "app", "memory", createdAt)), service.getTopNClosest("app", "text", 3));
         assertEquals("app", repository.nearestAppId);
         assertEquals(3, repository.requestedTopN);
         assertArrayEquals(new double[]{0.6, 0.8}, repository.nearestEmbedding.toArray(), 0.000001);
+    }
+
+    private MemoryResponseDto memoryResponse(String id, String appId, String text, Timestamp createdAt) {
+        return new MemoryResponseDto(
+                id,
+                appId,
+                text,
+                Instant.ofEpochSecond(createdAt.getSeconds(), createdAt.getNanos())
+        );
     }
 
     private static class FakeMemoryRepository implements MemoryRepository {

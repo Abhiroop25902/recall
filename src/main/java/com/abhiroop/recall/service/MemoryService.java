@@ -2,6 +2,7 @@ package com.abhiroop.recall.service;
 
 import com.abhiroop.recall.dto.GetMemoriesCursor;
 import com.abhiroop.recall.dto.GetMemoriesPage;
+import com.abhiroop.recall.dto.MemoryResponseDto;
 import com.abhiroop.recall.entity.Memory;
 import com.abhiroop.recall.repository.MemoryRepository;
 import com.abhiroop.recall.utils.ErrorStrings;
@@ -91,7 +92,7 @@ public class MemoryService {
                 );
 
         return new GetMemoriesPage(
-                memoryList,
+                memoryList.stream().map(MemoryResponseDto::fromMemory).toList(),
                 nextCursor
         );
     }
@@ -100,7 +101,7 @@ public class MemoryService {
         memoryRepository.deleteById(id);
     }
 
-    public List<Memory> getTopNClosest(String appId, String text, int topN) {
+    public List<MemoryResponseDto> getTopNClosest(String appId, String text, int topN) {
         if (appId == null || appId.isBlank())
             throw new IllegalArgumentException(
                     ErrorStrings.APP_ID_MUST_BE_PRESENT_AND_MUST_NOT_BE_BLANK.getErrorString()
@@ -129,6 +130,8 @@ public class MemoryService {
                 ))
         );
 
-        return memoryRepository.findNearestN(appId, embeddingVector, topN);
+        return memoryRepository.findNearestN(appId, embeddingVector, topN)
+                .stream().map(MemoryResponseDto::fromMemory)
+                .toList();
     }
 }
