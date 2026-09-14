@@ -76,6 +76,12 @@ public class FirestoreMemoryRepository implements MemoryRepository {
         }
 
         Query query = firestore.collection(Memory.COLLECTION_ID)
+                .select(
+                        FieldPath.documentId(),
+                        Memory.Fields.APP_ID.getFieldPath(),
+                        Memory.Fields.TEXT.getFieldPath(),
+                        Memory.Fields.CREATED_AT.getFieldPath()
+                )
                 .whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), appId)
                 .orderBy(Memory.Fields.CREATED_AT.getFieldPath())
                 .orderBy(FieldPath.documentId())
@@ -108,6 +114,7 @@ public class FirestoreMemoryRepository implements MemoryRepository {
                 firestore.collection(Memory.COLLECTION_ID)
                         .whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), appId)
                         .select(
+                                FieldPath.documentId(),
                                 Memory.Fields.APP_ID.getFieldPath(),
                                 Memory.Fields.TEXT.getFieldPath(),
                                 Memory.Fields.CREATED_AT.getFieldPath()

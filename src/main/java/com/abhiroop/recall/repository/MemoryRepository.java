@@ -13,7 +13,9 @@ public interface MemoryRepository {
 
     void deleteById(String id);
 
-    /** Returns one page ordered by creation time then ID; continuation requires both cursor values. */
+    /**
+     * Returns one page ordered by creation time then ID; continuation requires both cursor values.
+     */
     List<Memory> findByAppId(String appId,
                              int pageSize,
                              @Nullable Timestamp afterCreatedAt,

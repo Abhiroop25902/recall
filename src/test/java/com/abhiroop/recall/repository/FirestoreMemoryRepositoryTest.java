@@ -68,6 +68,7 @@ class FirestoreMemoryRepositoryTest {
     void findByAppIdBuildsOrderedLimitedQueryWithOptionalCursor(boolean hasCursor) {
         var firestore = mock(Firestore.class);
         var collection = mock(CollectionReference.class);
+        var projected = mock(Query.class);
         var filtered = mock(Query.class);
         var byTimestamp = mock(Query.class);
         var byId = mock(Query.class);
@@ -77,7 +78,13 @@ class FirestoreMemoryRepositoryTest {
         var document = mock(QueryDocumentSnapshot.class);
         var memory = new Memory("next-id", "app", "text", null, null);
         when(firestore.collection("memories")).thenReturn(collection);
-        when(collection.whereEqualTo(FieldPath.of("appId"), "app")).thenReturn(filtered);
+        when(collection.select(
+                FieldPath.documentId(),
+                FieldPath.of("appId"),
+                FieldPath.of("text"),
+                FieldPath.of("createdAt")
+        )).thenReturn(projected);
+        when(projected.whereEqualTo(FieldPath.of("appId"), "app")).thenReturn(filtered);
         when(filtered.orderBy(FieldPath.of("createdAt"))).thenReturn(byTimestamp);
         when(byTimestamp.orderBy(FieldPath.documentId())).thenReturn(byId);
         when(byId.limit(7)).thenReturn(limited);
@@ -93,9 +100,15 @@ class FirestoreMemoryRepositoryTest {
 
         assertEquals(List.of(memory), repository.findByAppId("app", 7, timestamp, id));
 
-        var order = inOrder(firestore, collection, filtered, byTimestamp, byId, limited, afterCursor);
+        var order = inOrder(firestore, collection, projected, filtered, byTimestamp, byId, limited, afterCursor);
         order.verify(firestore).collection("memories");
-        order.verify(collection).whereEqualTo(FieldPath.of("appId"), "app");
+        order.verify(collection).select(
+                FieldPath.documentId(),
+                FieldPath.of("appId"),
+                FieldPath.of("text"),
+                FieldPath.of("createdAt")
+        );
+        order.verify(projected).whereEqualTo(FieldPath.of("appId"), "app");
         order.verify(filtered).orderBy(FieldPath.of("createdAt"));
         order.verify(byTimestamp).orderBy(FieldPath.documentId());
         order.verify(byId).limit(7);
@@ -103,6 +116,6 @@ class FirestoreMemoryRepositoryTest {
             order.verify(limited).startAfter(timestamp, id);
         }
         order.verify(hasCursor ? afterCursor : limited).get();
-        verifyNoMoreInteractions(firestore, collection, filtered, byTimestamp, byId, limited, afterCursor);
+        verifyNoMoreInteractions(firestore, collection, projected, filtered, byTimestamp, byId, limited, afterCursor);
     }
 }
