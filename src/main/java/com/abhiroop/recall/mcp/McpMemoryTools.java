@@ -4,12 +4,14 @@ import com.abhiroop.recall.dto.GetMemoriesCursor;
 import com.abhiroop.recall.dto.GetMemoriesPage;
 import com.abhiroop.recall.dto.MemoryResponseDto;
 import com.abhiroop.recall.service.MemoryService;
+import com.abhiroop.recall.utils.ErrorStrings;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 @Component
 public class McpMemoryTools {
@@ -20,12 +22,32 @@ public class McpMemoryTools {
         this.memoryService = memoryService;
     }
 
+    private <T> Mono<T> safelyInvoke(Callable<T> operation) {
+        return Mono.fromCallable(operation)
+                .onErrorMap(
+                        exception -> !(exception instanceof IllegalArgumentException),
+                        _ -> new IllegalStateException(
+                                ErrorStrings.UNABLE_TO_PROCESS_MEMORY_AT_THIS_TIME_PLEASE_TRY_AGAIN_LATER.getErrorString()
+                        )
+                );
+    }
+
+    private Mono<Void> safelyInvoke(Runnable operation) {
+        return Mono.<Void>fromRunnable(operation)
+                .onErrorMap(
+                        exception -> !(exception instanceof IllegalArgumentException),
+                        _ -> new IllegalStateException(
+                                ErrorStrings.UNABLE_TO_PROCESS_MEMORY_AT_THIS_TIME_PLEASE_TRY_AGAIN_LATER.getErrorString()
+                        )
+                );
+    }
+
     @McpTool(
             description = "Save a new durable memory. appId is the required stable project namespace: use the repository name for code projects or the folder name otherwise. text is the required nonblank memory content. Creates a new memory rather than updating an existing one. The response contains only id, appId, text, and ISO-8601 createdAt; embeddings are excluded.",
             annotations = @McpTool.McpAnnotations(destructiveHint = false, openWorldHint = false)
     )
     public Mono<MemoryResponseDto> saveMemory(String appId, String text) {
-        return Mono.fromCallable(() ->
+        return safelyInvoke(() ->
                 MemoryResponseDto.fromMemory(
                         memoryService.saveMemory(appId, text)
                 ));
@@ -36,7 +58,7 @@ public class McpMemoryTools {
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
     )
     public Mono<GetMemoriesPage> getMemories(String appId, @Nullable GetMemoriesCursor cursor) {
-        return Mono.fromCallable(() -> memoryService.getMemories(appId, cursor));
+        return safelyInvoke(() -> memoryService.getMemories(appId, cursor));
     }
 
     @McpTool(
@@ -44,7 +66,7 @@ public class McpMemoryTools {
             annotations = @McpTool.McpAnnotations(idempotentHint = true, openWorldHint = false)
     )
     public Mono<Void> deleteMemory(String id) {
-        return Mono.fromRunnable(() -> memoryService.deleteMemory(id));
+        return safelyInvoke(() -> memoryService.deleteMemory(id));
     }
 
     @McpTool(
@@ -52,6 +74,6 @@ public class McpMemoryTools {
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false)
     )
     public Mono<List<MemoryResponseDto>> getTopNClosest(String appId, String text, int topN) {
-        return Mono.fromCallable(() -> memoryService.getTopNClosest(appId, text, topN));
+        return safelyInvoke(() -> memoryService.getTopNClosest(appId, text, topN));
     }
 }

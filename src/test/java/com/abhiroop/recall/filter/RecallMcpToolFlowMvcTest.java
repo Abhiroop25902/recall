@@ -27,9 +27,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,9 +69,71 @@ class RecallMcpToolFlowMvcTest {
     @Autowired
     private EmbeddingModel embeddingModel;
 
+    private static Stream<Arguments> invalidToolCalls() {
+        return Stream.of(
+                Arguments.of("saveMemory missing appId", """
+                        {"jsonrpc":"2.0","id":30,"method":"tools/call","params":{"name":"saveMemory","arguments":{"text":"memory"}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("saveMemory null appId", """
+                        {"jsonrpc":"2.0","id":31,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":null,"text":"memory"}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("saveMemory blank appId", """
+                        {"jsonrpc":"2.0","id":32,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":" ","text":"memory"}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("saveMemory missing text", """
+                        {"jsonrpc":"2.0","id":33,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app"}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("saveMemory null text", """
+                        {"jsonrpc":"2.0","id":34,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":null}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("saveMemory blank text", """
+                        {"jsonrpc":"2.0","id":35,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":" "}}}
+                        """, "text must be present and must not be blank"),
+                Arguments.of("getMemories missing appId", """
+                        {"jsonrpc":"2.0","id":36,"method":"tools/call","params":{"name":"getMemories","arguments":{}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getMemories null appId", """
+                        {"jsonrpc":"2.0","id":37,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":null}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getMemories blank appId", """
+                        {"jsonrpc":"2.0","id":38,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":" "}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("getMemories incomplete cursor", """
+                        {"jsonrpc":"2.0","id":39,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":"app","cursor":{"afterCreatedAt":"2026-09-15T00:00:00Z"}}}}
+                        """, "required property 'afterId' not found"),
+                Arguments.of("getTopNClosest missing appId", """
+                        {"jsonrpc":"2.0","id":40,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"text":"query","topN":1}}}
+                        """, "required property 'appId' not found"),
+                Arguments.of("getTopNClosest blank appId", """
+                        {"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":" ","text":"query","topN":1}}}
+                        """, "appId must be present and must not be blank"),
+                Arguments.of("getTopNClosest missing text", """
+                        {"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","topN":1}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("getTopNClosest null text", """
+                        {"jsonrpc":"2.0","id":43,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":null,"topN":1}}}
+                        """, "required property 'text' not found"),
+                Arguments.of("getTopNClosest blank text", """
+                        {"jsonrpc":"2.0","id":44,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":" ","topN":1}}}
+                        """, "text must be present and must not be blank"),
+                Arguments.of("getTopNClosest negative topN", """
+                        {"jsonrpc":"2.0","id":45,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":-1}}}
+                        """, "topN must be between 1 and 1000"),
+                Arguments.of("getTopNClosest excessive topN", """
+                        {"jsonrpc":"2.0","id":46,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":1001}}}
+                        """, "topN must be between 1 and 1000"),
+                Arguments.of("deleteMemory missing id", """
+                        {"jsonrpc":"2.0","id":47,"method":"tools/call","params":{"name":"deleteMemory","arguments":{}}}
+                        """, "required property 'id' not found"),
+                Arguments.of("deleteMemory null id", """
+                        {"jsonrpc":"2.0","id":48,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":null}}}
+                        """, "required property 'id' not found")
+        );
+    }
+
     @BeforeEach
-    void clearMockInteractions() {
-        org.mockito.Mockito.clearInvocations(memoryRepository, embeddingModel);
+    void resetMockDependencies() {
+        reset(memoryRepository, embeddingModel);
     }
 
     @Test
@@ -225,7 +285,7 @@ class RecallMcpToolFlowMvcTest {
 
     @Test
     void malformedJsonRpcRequestIsAProtocolErrorRatherThanAToolError() throws Exception {
-        String response = performMcpRequest("{" )
+        String response = performMcpRequest("{")
                 .andExpect(status().isBadRequest())
                 .andReturn()
                 .getResponse()
@@ -253,6 +313,122 @@ class RecallMcpToolFlowMvcTest {
 
         assertEquals("id must be present and must not be blank", OBJECT_MAPPER.readTree(response).at("/error/message").asText());
         verifyNoInteractions(memoryRepository, embeddingModel);
+    }
+
+    @Test
+    void realMcpSanitizesAnEmbeddingFailureWhileSaving() throws Exception {
+        when(embeddingModel.embed("memory with failed embedding"))
+                .thenThrow(new IllegalStateException("private-embedding-failure"));
+
+        JsonNode response = toolErrorResponse("""
+                {"jsonrpc":"2.0","id":50,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"test-app","text":"memory with failed embedding"}}}
+                """);
+
+        assertSanitizedDependencyFailure(response, "private-embedding-failure");
+        verify(embeddingModel).embed("memory with failed embedding");
+        verifyNoInteractions(memoryRepository);
+    }
+
+    @Test
+    void realMcpSanitizesARepositoryFailureWhileSaving() throws Exception {
+        when(embeddingModel.embed("memory with failed persistence")).thenReturn(new float[]{0.6f, 0.8f});
+        when(memoryRepository.save(org.mockito.ArgumentMatchers.any(Memory.class)))
+                .thenThrow(new IllegalStateException("private-repository-save-failure"));
+
+        JsonNode response = toolErrorResponse("""
+                {"jsonrpc":"2.0","id":51,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"test-app","text":"memory with failed persistence"}}}
+                """);
+
+        assertSanitizedDependencyFailure(response, "private-repository-save-failure");
+        verify(embeddingModel).embed("memory with failed persistence");
+        verify(memoryRepository).save(org.mockito.ArgumentMatchers.any(Memory.class));
+    }
+
+    @Test
+    void realMcpSanitizesARepositoryFailureWhileListing() throws Exception {
+        when(memoryRepository.findByAppId("test-app", 10, null, null))
+                .thenThrow(new IllegalStateException("private-repository-list-failure"));
+
+        JsonNode response = toolErrorResponse(GET_MEMORIES_REQUEST);
+
+        assertSanitizedDependencyFailure(response, "private-repository-list-failure");
+        verify(memoryRepository).findByAppId("test-app", 10, null, null);
+        verifyNoInteractions(embeddingModel);
+    }
+
+    @Test
+    void realMcpSanitizesARepositoryFailureBeforeSearching() throws Exception {
+        when(memoryRepository.findCountByAppId("test-app"))
+                .thenThrow(new IllegalStateException("private-repository-count-failure"));
+
+        JsonNode response = toolErrorResponse("""
+                {"jsonrpc":"2.0","id":52,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"test-app","text":"query","topN":1}}}
+                """);
+
+        assertSanitizedDependencyFailure(response, "private-repository-count-failure");
+        verify(memoryRepository).findCountByAppId("test-app");
+        verifyNoInteractions(embeddingModel);
+        verify(memoryRepository, never()).findNearestN(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyInt()
+        );
+    }
+
+    @Test
+    void realMcpSanitizesAnEmbeddingFailureWhileSearching() throws Exception {
+        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(embeddingModel.embed("failed search embedding"))
+                .thenThrow(new IllegalStateException("private-search-embedding-failure"));
+
+        JsonNode response = toolErrorResponse("""
+                {"jsonrpc":"2.0","id":53,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"test-app","text":"failed search embedding","topN":1}}}
+                """);
+
+        assertSanitizedDependencyFailure(response, "private-search-embedding-failure");
+        verify(memoryRepository).findCountByAppId("test-app");
+        verify(embeddingModel).embed("failed search embedding");
+        verify(memoryRepository, never()).findNearestN(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyInt()
+        );
+    }
+
+    @Test
+    void realMcpSanitizesARepositoryFailureWhileSearching() throws Exception {
+        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(embeddingModel.embed("failed nearest search")).thenReturn(new float[]{0.6f, 0.8f});
+        when(memoryRepository.findNearestN(
+                org.mockito.ArgumentMatchers.eq("test-app"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(1)
+        )).thenThrow(new IllegalStateException("private-repository-search-failure"));
+
+        JsonNode response = toolErrorResponse("""
+                {"jsonrpc":"2.0","id":54,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"test-app","text":"failed nearest search","topN":1}}}
+                """);
+
+        assertSanitizedDependencyFailure(response, "private-repository-search-failure");
+        verify(memoryRepository).findCountByAppId("test-app");
+        verify(embeddingModel).embed("failed nearest search");
+        verify(memoryRepository).findNearestN(
+                org.mockito.ArgumentMatchers.eq("test-app"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(1)
+        );
+    }
+
+    @Test
+    void realMcpSanitizesARepositoryFailureWhileDeleting() throws Exception {
+        doThrow(new IllegalStateException("private-repository-delete-failure"))
+                .when(memoryRepository).deleteById("memory-1");
+
+        JsonNode response = executionErrorResponse();
+
+        assertSanitizedExecutionFailure(response);
+        verify(memoryRepository).deleteById("memory-1");
+        verifyNoInteractions(embeddingModel);
     }
 
     private org.springframework.test.web.servlet.ResultActions performMcpRequest(String request) throws Exception {
@@ -301,66 +477,37 @@ class RecallMcpToolFlowMvcTest {
         return OBJECT_MAPPER.readTree(response);
     }
 
-    private static Stream<Arguments> invalidToolCalls() {
-        return Stream.of(
-                Arguments.of("saveMemory missing appId", """
-                        {"jsonrpc":"2.0","id":30,"method":"tools/call","params":{"name":"saveMemory","arguments":{"text":"memory"}}}
-                        """, "required property 'appId' not found"),
-                Arguments.of("saveMemory null appId", """
-                        {"jsonrpc":"2.0","id":31,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":null,"text":"memory"}}}
-                        """, "required property 'appId' not found"),
-                Arguments.of("saveMemory blank appId", """
-                        {"jsonrpc":"2.0","id":32,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":" ","text":"memory"}}}
-                        """, "appId must be present and must not be blank"),
-                Arguments.of("saveMemory missing text", """
-                        {"jsonrpc":"2.0","id":33,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app"}}}
-                        """, "required property 'text' not found"),
-                Arguments.of("saveMemory null text", """
-                        {"jsonrpc":"2.0","id":34,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":null}}}
-                        """, "required property 'text' not found"),
-                Arguments.of("saveMemory blank text", """
-                        {"jsonrpc":"2.0","id":35,"method":"tools/call","params":{"name":"saveMemory","arguments":{"appId":"app","text":" "}}}
-                        """, "text must be present and must not be blank"),
-                Arguments.of("getMemories missing appId", """
-                        {"jsonrpc":"2.0","id":36,"method":"tools/call","params":{"name":"getMemories","arguments":{}}}
-                        """, "required property 'appId' not found"),
-                Arguments.of("getMemories null appId", """
-                        {"jsonrpc":"2.0","id":37,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":null}}}
-                        """, "required property 'appId' not found"),
-                Arguments.of("getMemories blank appId", """
-                        {"jsonrpc":"2.0","id":38,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":" "}}}
-                        """, "appId must be present and must not be blank"),
-                Arguments.of("getMemories incomplete cursor", """
-                        {"jsonrpc":"2.0","id":39,"method":"tools/call","params":{"name":"getMemories","arguments":{"appId":"app","cursor":{"afterCreatedAt":"2026-09-15T00:00:00Z"}}}}
-                        """, "required property 'afterId' not found"),
-                Arguments.of("getTopNClosest missing appId", """
-                        {"jsonrpc":"2.0","id":40,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"text":"query","topN":1}}}
-                        """, "required property 'appId' not found"),
-                Arguments.of("getTopNClosest blank appId", """
-                        {"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":" ","text":"query","topN":1}}}
-                        """, "appId must be present and must not be blank"),
-                Arguments.of("getTopNClosest missing text", """
-                        {"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","topN":1}}}
-                        """, "required property 'text' not found"),
-                Arguments.of("getTopNClosest null text", """
-                        {"jsonrpc":"2.0","id":43,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":null,"topN":1}}}
-                        """, "required property 'text' not found"),
-                Arguments.of("getTopNClosest blank text", """
-                        {"jsonrpc":"2.0","id":44,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":" ","topN":1}}}
-                        """, "text must be present and must not be blank"),
-                Arguments.of("getTopNClosest negative topN", """
-                        {"jsonrpc":"2.0","id":45,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":-1}}}
-                        """, "topN must be between 1 and 1000"),
-                Arguments.of("getTopNClosest excessive topN", """
-                        {"jsonrpc":"2.0","id":46,"method":"tools/call","params":{"name":"getTopNClosest","arguments":{"appId":"app","text":"query","topN":1001}}}
-                        """, "topN must be between 1 and 1000"),
-                Arguments.of("deleteMemory missing id", """
-                        {"jsonrpc":"2.0","id":47,"method":"tools/call","params":{"name":"deleteMemory","arguments":{}}}
-                        """, "required property 'id' not found"),
-                Arguments.of("deleteMemory null id", """
-                        {"jsonrpc":"2.0","id":48,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":null}}}
-                        """, "required property 'id' not found")
-        );
+    private JsonNode executionErrorResponse() throws Exception {
+        String response = performMcpRequest("""
+                {"jsonrpc":"2.0","id":55,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":"memory-1"}}}
+                """)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jsonrpc").value("2.0"))
+                .andExpect(jsonPath("$.error.code").value(-32603))
+                .andExpect(jsonPath("$.result").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return OBJECT_MAPPER.readTree(response);
+    }
+
+    private void assertSanitizedDependencyFailure(JsonNode response, String rawDetail) {
+        String errorText = response.at("/result/content/0/text").asText();
+
+        assertSanitizedErrorText(errorText, rawDetail);
+    }
+
+    private void assertSanitizedExecutionFailure(JsonNode response) {
+        String errorText = response.at("/error/message").asText();
+
+        assertSanitizedErrorText(errorText, "private-repository-delete-failure");
+    }
+
+    private void assertSanitizedErrorText(String errorText, String rawDetail) {
+        assertTrue(errorText.contains("Unable to process memory at this time. Please try again later"));
+        assertFalse(errorText.contains(rawDetail));
+        assertFalse(errorText.contains("IllegalStateException"));
     }
 
     private void assertPublicMemory(JsonNode memory, Timestamp createdAt) {

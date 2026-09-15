@@ -370,6 +370,7 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 - [ ] **Task 12.5b: Cover dependency failures over MCP** *(Codex; after Task 12.5a)*
     - Simulate embedding and repository failures using local substitutes.
     - Verify the intended MCP tool-error representation and useful messages, rather than a successful empty result; do not expose raw provider details.
+    - Verified locally (2026-09-15): cloud-free real-MCP tests simulate embedding and repository failures during save, list, search, and delete. Value-returning tools return `result.isError` with the stable sanitized message; the `Mono<Void>` deletion tool preserves its JSON-RPC execution-error (`-32603`) representation with the same message. Tests assert no raw dependency fixture details or exception class names reach clients, and verify each operation stops before later dependencies after a failure.
 - [ ] **Task 12.5c: Cover successful deletion over MCP** *(Codex)*
     - Exercise the current deletion contract through WebMVC and assert the response and repository interaction.
     - Keep this test aligned with the later app-scoped migration in Day 15.

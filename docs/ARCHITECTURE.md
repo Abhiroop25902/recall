@@ -75,6 +75,12 @@ tool arguments produce a `result.isError` response; a blank deletion ID produces
 while malformed JSON produces HTTP `400` with a JSON-RPC invalid-message error (`-32600`). The service deliberately has no proactive character limit until a concrete token- or byte-based
 contract requires one.
 
+`McpMemoryTools` preserves `IllegalArgumentException` validation feedback but maps all other tool failures to the
+stable client message `Unable to process memory at this time. Please try again later`, without retaining the original
+exception as a cause. Save, list, and retrieval failures are MCP `result.isError` responses; a `Mono<Void>` deletion
+failure is a JSON-RPC execution error (`-32603`). The cloud-free transport suite verifies raw dependency messages and
+exception class names do not reach clients, and that failed operations do not continue to later dependencies.
+
 `saveMemory(appId, text)` accepts direct required MCP arguments and creates a new memory. `getMemories` and
 `getTopNClosest` are read-only, idempotent, closed-world operations. `saveMemory` is additive, non-idempotent, and
 closed-world; `deleteMemory(id)` is destructive, idempotent, and closed-world. The current deletion operation remains
