@@ -375,9 +375,10 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Exercise the current deletion contract through WebMVC and assert the response and repository interaction.
     - Keep this test aligned with the later app-scoped migration in Day 15.
     - Verified locally (2026-09-17): authenticated cloud-free real-MCP deletion returns a successful tool result, invokes `deleteById` once, and does not invoke the embedding model. The focused `RecallMcpToolFlowMvcTest` and the cloud-free `./gradlew test` suite passed.
-- [ ] **Task 12.6: Verify the complete harness contract** *(user reviews client behavior; Codex runs checks; after Tasks 12.1–12.5)*
+- [x] **Task 12.6: Verify the complete harness contract** *(user reviews client behavior; Codex runs checks; after Tasks 12.1–12.5)*
     - Run `./gradlew test` with cloud credentials unavailable, then inspect guidance, schemas, and response shapes from a connected harness.
     - Record verification evidence and finalize client compatibility documentation before deploying response changes.
+    - Verified locally (2026-09-17): with common ADC/project environment variables unset, `./gradlew test` passed all 99 tests. The connected Recall MCP harness exposed the published lifecycle and replacement-safety guidance plus the four-tool contract. An isolated `recall-day12-6-verification-20260917` fixture confirmed public save, list, and retrieval responses contain only `id`, `appId`, `text`, and ISO-8601 `createdAt` (no embedding); successful deletion was followed by an empty listing. `README.md` now records the client-facing tool, response, and cursor compatibility contract. No deployment was performed.
 
 ---
 

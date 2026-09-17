@@ -161,6 +161,12 @@ Merge this MCP server into `~/.config/opencode/opencode.json`, replacing
 Open a new terminal or reload your shell after changing `~/.zshrc`, then restart
 OpenCode. Initialize the Recall MCP server and confirm that its tools are discovered.
 
+The connected client must discover `saveMemory`, `getMemories`, `getTopNClosest`, and
+`deleteMemory`. Save, listing, and retrieval responses expose only `id`, `appId`,
+`text`, and ISO-8601 `createdAt`; embeddings are never part of the public MCP contract.
+`getMemories` uses a server-issued `nextCursor`: omit `cursor` on the first request,
+relay it unchanged on later requests, and stop when it is `null`.
+
 Do not commit the API key, include it in a URL, or add it to application configuration.
 
 ## Create Firestore indexes
