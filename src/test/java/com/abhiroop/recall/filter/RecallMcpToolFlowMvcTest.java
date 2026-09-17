@@ -316,6 +316,22 @@ class RecallMcpToolFlowMvcTest {
     }
 
     @Test
+    void authenticatedClientCanDeleteMemoryThroughTheRealMcpTransport() throws Exception {
+        performMcpRequest("""
+                {"jsonrpc":"2.0","id":56,"method":"tools/call","params":{"name":"deleteMemory","arguments":{"id":"memory-1"}}}
+                """)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jsonrpc").value("2.0"))
+                .andExpect(jsonPath("$.id").value(56))
+                .andExpect(jsonPath("$.result.isError").value(false))
+                .andExpect(jsonPath("$.error").doesNotExist());
+
+        verify(memoryRepository).deleteById("memory-1");
+        verifyNoInteractions(embeddingModel);
+        verifyNoMoreInteractions(memoryRepository);
+    }
+
+    @Test
     void realMcpSanitizesAnEmbeddingFailureWhileSaving() throws Exception {
         when(embeddingModel.embed("memory with failed embedding"))
                 .thenThrow(new IllegalStateException("private-embedding-failure"));

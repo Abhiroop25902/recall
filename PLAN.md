@@ -367,13 +367,14 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
     - Assert useful error outcomes and no external work for rejected inputs; distinguish tool failures from malformed JSON-RPC requests.
     - If observed behavior needs an application fix, record the failing case as a user-owned handoff before marking this task complete.
     - Verified locally (2026-09-15): `MemoryService.deleteMemory` now rejects null or blank IDs before repository work. Cloud-free real-MCP coverage asserts missing/null/blank tool inputs, `topN` bounds, incomplete cursors, zero repository/embedding interactions, and the distinct malformed-JSON-RPC response. Focused `RecallMcpToolFlowMvcTest` and `./gradlew test` with common Google/ADC environment variables unset passed.
-- [ ] **Task 12.5b: Cover dependency failures over MCP** *(Codex; after Task 12.5a)*
+- [x] **Task 12.5b: Cover dependency failures over MCP** *(Codex; after Task 12.5a)*
     - Simulate embedding and repository failures using local substitutes.
     - Verify the intended MCP tool-error representation and useful messages, rather than a successful empty result; do not expose raw provider details.
     - Verified locally (2026-09-15): cloud-free real-MCP tests simulate embedding and repository failures during save, list, search, and delete. Value-returning tools return `result.isError` with the stable sanitized message; the `Mono<Void>` deletion tool preserves its JSON-RPC execution-error (`-32603`) representation with the same message. Tests assert no raw dependency fixture details or exception class names reach clients, and verify each operation stops before later dependencies after a failure.
-- [ ] **Task 12.5c: Cover successful deletion over MCP** *(Codex)*
+- [x] **Task 12.5c: Cover successful deletion over MCP** *(Codex)*
     - Exercise the current deletion contract through WebMVC and assert the response and repository interaction.
     - Keep this test aligned with the later app-scoped migration in Day 15.
+    - Verified locally (2026-09-17): authenticated cloud-free real-MCP deletion returns a successful tool result, invokes `deleteById` once, and does not invoke the embedding model. The focused `RecallMcpToolFlowMvcTest` and the cloud-free `./gradlew test` suite passed.
 - [ ] **Task 12.6: Verify the complete harness contract** *(user reviews client behavior; Codex runs checks; after Tasks 12.1–12.5)*
     - Run `./gradlew test` with cloud credentials unavailable, then inspect guidance, schemas, and response shapes from a connected harness.
     - Record verification evidence and finalize client compatibility documentation before deploying response changes.
