@@ -63,14 +63,15 @@ creation timestamp. Changes are handled by deleting the old document and creatin
 intentionally not supported. Repository saves are create-only and cannot overwrite an existing ID.
 
 `getTopNClosest(appId, text, topN)` is the MCP retrieval tool. It returns an empty result for `topN == 0`, rejects
-values outside `0..1000`, and checks the app namespace before paying for query embedding inference. For non-empty
-namespaces, the service obtains a provider-normalized query embedding and queries Firestore with an `appId` equality filter
-and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation time, excluding the
-stored embedding from MCP responses.
+values outside `0..1000`, and calls `existByAppId` before paying for query embedding inference. That preflight uses an
+`appId` equality filter, an ID-only projection, and `limit(1)`, so it reads at most one document and returns a boolean.
+For non-empty namespaces, the service obtains a provider-normalized query embedding and queries Firestore with an
+`appId` equality filter and cosine nearest-neighbor search. Retrieval projects the document ID, app ID, text, and creation
+time, excluding the stored embedding from MCP responses.
 
 All memory tool inputs are validated before external work: saving requires nonblank `appId` and text, listing requires
-a nonblank `appId`, and retrieval requires nonblank `appId` and text before its `topN == 0` shortcut, Firestore count,
-or embedding inference. Deletion requires a nonblank ID before repository work. At the MCP transport, schema-invalid
+a nonblank `appId`, and retrieval requires nonblank `appId` and text before its `topN == 0` shortcut, Firestore
+existence preflight, or embedding inference. Deletion requires a nonblank ID before repository work. At the MCP transport, schema-invalid
 tool arguments produce a `result.isError` response; a blank deletion ID produces a JSON-RPC execution error (`-32603`),
 while malformed JSON produces HTTP `400` with a JSON-RPC invalid-message error (`-32600`). The service deliberately has no proactive character limit until a concrete token- or byte-based
 contract requires one.
