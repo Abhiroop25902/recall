@@ -20,7 +20,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
 - [x] Day 9: OpenCode integration & MVP verification — existing single-user use confirms authenticated save, retrieval, and deletion work end-to-end; separate-device testing is not required.
 - [x] Day 10: Google Cloud self-hosting setup guide complete.
 - [x] Day 11: Reliability and security remediation — application, cloud-free test, deployed pagination integration, and latency-benchmark verification complete.
-- [ ] Day 12: Harness-facing MCP contract — retrieval guidance, tool metadata, public response DTOs, and transport coverage.
+- [x] Day 12: Harness-facing MCP contract — retrieval guidance, tool metadata, public response DTOs, and transport coverage.
 - [ ] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, and bearer parsing.
 - [ ] Day 14: Retrieval quality evaluation — representative queries, distance reporting, and an evidence-based threshold decision.
 - [ ] Day 15: App-scoped deletion — namespace mistake protection and client migration.
@@ -386,10 +386,11 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
 
 **Goal:** Fix the concrete integration and scaling issues identified in the whole-project review.
 
-- [ ] **Task 13.1a: Fix project-local endpoint configuration** *(user)*
+- [x] **Task 13.1a: Fix project-local endpoint configuration** *(user)*
     - Resolve the committed `.opencode/opencode.json` entry overriding a self-hoster's same-name global `recall` server with the owner's deployment URL.
-    - Make the endpoint locally configurable, provide an example configuration, or explicitly configure the project-local override in the self-hosting guide.
-    - Keep credentials in environment substitution; done when the chosen configuration strategy no longer silently selects the owner's endpoint for self-hosters.
+     - Make the endpoint locally configurable, provide an example configuration, or explicitly configure the project-local override in the self-hosting guide.
+     - Keep credentials in environment substitution; done when the chosen configuration strategy no longer silently selects the owner's endpoint for self-hosters.
+     - Verified locally (2026-09-18): `.opencode/opencode.json` contains no project-local `recall` server override. The self-hosting guide instead instructs each owner to merge a `recall` server into their global OpenCode configuration with their own `SERVICE_URL` and the environment-substituted `RECALL_API_KEY`.
 - [ ] **Task 13.1b: Document and verify self-hosted configuration precedence** *(user; after Task 13.1a)*
     - Update the setup guide for the chosen configuration strategy and supported OpenCode behavior.
     - Verify the effective server URL from inside a fork/clone with a different global endpoint; it must target the intended self-hosted service.
