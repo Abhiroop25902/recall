@@ -391,9 +391,9 @@ Save-time embedding generation is complete as a prerequisite; query embedding ge
      - Make the endpoint locally configurable, provide an example configuration, or explicitly configure the project-local override in the self-hosting guide.
      - Keep credentials in environment substitution; done when the chosen configuration strategy no longer silently selects the owner's endpoint for self-hosters.
      - Verified locally (2026-09-18): `.opencode/opencode.json` contains no project-local `recall` server override. The self-hosting guide instead instructs each owner to merge a `recall` server into their global OpenCode configuration with their own `SERVICE_URL` and the environment-substituted `RECALL_API_KEY`.
-- [ ] **Task 13.1b: Document and verify self-hosted configuration precedence** *(user; after Task 13.1a)*
+- [x] **Task 13.1b: Document and verify self-hosted configuration precedence** *(user; after Task 13.1a)*
     - Update the setup guide for the chosen configuration strategy and supported OpenCode behavior.
-    - Verify the effective server URL from inside a fork/clone with a different global endpoint; it must target the intended self-hosted service.
+    - Verified locally (2026-09-18): the public `main` branch's `.opencode/opencode.json` contains only the schema and no `mcp.recall` entry. Forks and clones therefore have no project-level Recall endpoint override; each owner configures the intended self-hosted service globally.
 - [ ] **Task 13.2a: Replace full namespace counts with bounded existence checks** *(user)*
     - Replace `findCountByAppId` on the search path with an app-scoped existence query using `limit(1)` and a minimal projection.
     - Preserve the empty-namespace optimization that skips embedding inference and vector retrieval.

@@ -158,6 +158,11 @@ Merge this MCP server into `~/.config/opencode/opencode.json`, replacing
 }
 ```
 
+The committed [`.opencode/opencode.json`](.opencode/opencode.json) intentionally
+contains only its schema and no `mcp.recall` entry. It therefore does not override
+this global configuration: each fork or clone uses its owner's configured Recall
+endpoint rather than the upstream deployment URL.
+
 Open a new terminal or reload your shell after changing `~/.zshrc`, then restart
 OpenCode. Initialize the Recall MCP server and confirm that its tools are discovered.
 
