@@ -250,7 +250,7 @@ class RecallMcpToolFlowMvcTest {
         when(embeddingModel.embed("find public memory")).thenReturn(new float[]{0.6f, 0.8f});
         when(memoryRepository.save(org.mockito.ArgumentMatchers.any(Memory.class))).thenReturn(memory);
         when(memoryRepository.findByAppId("test-app", 10, null, null)).thenReturn(List.of(memory));
-        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(memoryRepository.existByAppId("test-app")).thenReturn(true);
         when(memoryRepository.findNearestN(org.mockito.ArgumentMatchers.eq("test-app"), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(1)))
                 .thenReturn(List.of(memory));
 
@@ -374,7 +374,7 @@ class RecallMcpToolFlowMvcTest {
 
     @Test
     void realMcpSanitizesARepositoryFailureBeforeSearching() throws Exception {
-        when(memoryRepository.findCountByAppId("test-app"))
+        when(memoryRepository.existByAppId("test-app"))
                 .thenThrow(new IllegalStateException("private-repository-count-failure"));
 
         JsonNode response = toolErrorResponse("""
@@ -382,7 +382,7 @@ class RecallMcpToolFlowMvcTest {
                 """);
 
         assertSanitizedDependencyFailure(response, "private-repository-count-failure");
-        verify(memoryRepository).findCountByAppId("test-app");
+        verify(memoryRepository).existByAppId("test-app");
         verifyNoInteractions(embeddingModel);
         verify(memoryRepository, never()).findNearestN(
                 org.mockito.ArgumentMatchers.anyString(),
@@ -393,7 +393,7 @@ class RecallMcpToolFlowMvcTest {
 
     @Test
     void realMcpSanitizesAnEmbeddingFailureWhileSearching() throws Exception {
-        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(memoryRepository.existByAppId("test-app")).thenReturn(true);
         when(embeddingModel.embed("failed search embedding"))
                 .thenThrow(new IllegalStateException("private-search-embedding-failure"));
 
@@ -402,7 +402,7 @@ class RecallMcpToolFlowMvcTest {
                 """);
 
         assertSanitizedDependencyFailure(response, "private-search-embedding-failure");
-        verify(memoryRepository).findCountByAppId("test-app");
+        verify(memoryRepository).existByAppId("test-app");
         verify(embeddingModel).embed("failed search embedding");
         verify(memoryRepository, never()).findNearestN(
                 org.mockito.ArgumentMatchers.anyString(),
@@ -413,7 +413,7 @@ class RecallMcpToolFlowMvcTest {
 
     @Test
     void realMcpSanitizesARepositoryFailureWhileSearching() throws Exception {
-        when(memoryRepository.findCountByAppId("test-app")).thenReturn(1L);
+        when(memoryRepository.existByAppId("test-app")).thenReturn(true);
         when(embeddingModel.embed("failed nearest search")).thenReturn(new float[]{0.6f, 0.8f});
         when(memoryRepository.findNearestN(
                 org.mockito.ArgumentMatchers.eq("test-app"),
@@ -426,7 +426,7 @@ class RecallMcpToolFlowMvcTest {
                 """);
 
         assertSanitizedDependencyFailure(response, "private-repository-search-failure");
-        verify(memoryRepository).findCountByAppId("test-app");
+        verify(memoryRepository).existByAppId("test-app");
         verify(embeddingModel).embed("failed nearest search");
         verify(memoryRepository).findNearestN(
                 org.mockito.ArgumentMatchers.eq("test-app"),

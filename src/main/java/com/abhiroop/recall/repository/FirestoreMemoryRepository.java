@@ -99,13 +99,14 @@ public class FirestoreMemoryRepository implements MemoryRepository {
     }
 
     @Override
-    public Long findCountByAppId(String appId) {
-        return await(
+    public boolean existByAppId(String appId) {
+        return !await(
                 firestore.collection(Memory.COLLECTION_ID)
+                        .select(FieldPath.documentId())
                         .whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), appId)
-                        .count()
+                        .limit(1)
                         .get()
-        ).getCount();
+        ).isEmpty();
     }
 
     @Override

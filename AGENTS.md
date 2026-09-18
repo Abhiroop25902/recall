@@ -7,6 +7,7 @@
 - Preserve the current stack unless the user explicitly asks to change it: Gradle, Java 25, Spring Boot 4.1.1, `com.abhiroop.recall`, and `application.properties`.
 - Prefer incremental, reviewable changes. Before declaring work complete, run the most relevant verification available and state anything that could not be verified.
 - Plan non-trivial work by delegating appropriate tasks to subagents; use direct tools for focused reads, edits, coordination, and final checks.
+- Every implementation plan must list the files expected to be modified.
 
 ## Project documents
 

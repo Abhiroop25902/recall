@@ -21,7 +21,7 @@ public interface MemoryRepository {
                              @Nullable Timestamp afterCreatedAt,
                              @Nullable String afterId);
 
-    Long findCountByAppId(String appId);
+    boolean existByAppId(String appId);
 
     List<Memory> findNearestN(String appId, VectorValue embedding, int topN);
 }

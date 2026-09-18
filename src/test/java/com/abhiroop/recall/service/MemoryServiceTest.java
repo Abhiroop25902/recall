@@ -193,7 +193,7 @@ class MemoryServiceTest {
         var service = new MemoryService(repository, embeddingModel);
 
         assertEquals(List.of(), service.getTopNClosest("app", "text", 0));
-        assertEquals(0, repository.findCountCalls);
+        assertEquals(0, repository.existenceCheckCalls);
         verifyNoInteractions(embeddingModel);
     }
 
@@ -205,7 +205,7 @@ class MemoryServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.getTopNClosest("app", "text", -1));
         assertThrows(IllegalArgumentException.class, () -> service.getTopNClosest("app", "text", 1001));
-        assertEquals(0, repository.findCountCalls);
+        assertEquals(0, repository.existenceCheckCalls);
         verifyNoInteractions(embeddingModel);
     }
 
@@ -242,14 +242,14 @@ class MemoryServiceTest {
         var service = new MemoryService(repository, embeddingModel);
 
         assertEquals(List.of(), service.getTopNClosest("app", "text", 3));
-        assertEquals("app", repository.countedAppId);
+        assertEquals("app", repository.checkedAppId);
         verifyNoInteractions(embeddingModel);
     }
 
     @Test
     void getTopNClosestDelegatesProviderEmbeddingToRepository() {
         var repository = new FakeMemoryRepository();
-        repository.memoryCount = 1;
+        repository.appExists = true;
         var createdAt = Timestamp.ofTimeSecondsAndNanos(1_700_000_000L, 123_456_789);
         repository.nearestMemories = List.of(new Memory("memory-id", "app", "memory", null, createdAt));
         var embeddingModel = mock(EmbeddingModel.class);
@@ -274,15 +274,15 @@ class MemoryServiceTest {
     private static class FakeMemoryRepository implements MemoryRepository {
         private Memory saved;
         private List<Memory> memories = List.of();
-        private long memoryCount;
+        private boolean appExists;
         private List<Memory> nearestMemories = List.of();
         private String requestedAppId;
         private int requestedPageSize;
         private Timestamp afterCreatedAt;
         private String afterId;
         private String deletedId;
-        private int findCountCalls;
-        private String countedAppId;
+        private int existenceCheckCalls;
+        private String checkedAppId;
         private String nearestAppId;
         private com.google.cloud.firestore.VectorValue nearestEmbedding;
         private int requestedTopN;
@@ -308,10 +308,10 @@ class MemoryServiceTest {
         }
 
         @Override
-        public Long findCountByAppId(String appId) {
-            findCountCalls++;
-            countedAppId = appId;
-            return memoryCount;
+        public boolean existByAppId(String appId) {
+            existenceCheckCalls++;
+            checkedAppId = appId;
+            return appExists;
         }
 
         @Override

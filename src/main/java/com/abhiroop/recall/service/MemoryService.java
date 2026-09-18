@@ -124,9 +124,7 @@ public class MemoryService {
             throw new IllegalArgumentException("topN must be between 1 and 1000");
 
         //avoid generating embedding and doing similarity search if no memory with given appId exists
-        final var appIdMemoryCount = memoryRepository.findCountByAppId(appId);
-
-        if (appIdMemoryCount == 0) return List.of();
+        if (!memoryRepository.existByAppId(appId)) return List.of();
 
         //gemini-embedding-2 => the embedding is normalized for 1536
         //if for some reason we have to downgrade to gemini-embedding-001 have to manually normalize

@@ -118,4 +118,32 @@ class FirestoreMemoryRepositoryTest {
         order.verify(hasCursor ? afterCursor : limited).get();
         verifyNoMoreInteractions(firestore, collection, projected, filtered, byTimestamp, byId, limited, afterCursor);
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void existByAppIdBuildsBoundedProjectedQuery(boolean exists) {
+        var firestore = mock(Firestore.class);
+        var collection = mock(CollectionReference.class);
+        var projected = mock(Query.class);
+        var filtered = mock(Query.class);
+        var limited = mock(Query.class);
+        var snapshot = mock(QuerySnapshot.class);
+        when(firestore.collection(Memory.COLLECTION_ID)).thenReturn(collection);
+        when(collection.select(FieldPath.documentId())).thenReturn(projected);
+        when(projected.whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), "app")).thenReturn(filtered);
+        when(filtered.limit(1)).thenReturn(limited);
+        when(limited.get()).thenReturn(ApiFutures.immediateFuture(snapshot));
+        when(snapshot.isEmpty()).thenReturn(!exists);
+        var repository = new FirestoreMemoryRepository(firestore);
+
+        assertEquals(exists, repository.existByAppId("app"));
+
+        var order = inOrder(firestore, collection, projected, filtered, limited);
+        order.verify(firestore).collection(Memory.COLLECTION_ID);
+        order.verify(collection).select(FieldPath.documentId());
+        order.verify(projected).whereEqualTo(Memory.Fields.APP_ID.getFieldPath(), "app");
+        order.verify(filtered).limit(1);
+        order.verify(limited).get();
+        verifyNoMoreInteractions(firestore, collection, projected, filtered, limited);
+    }
 }
