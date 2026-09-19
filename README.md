@@ -204,9 +204,9 @@ Run the unit tests locally:
 ./gradlew test
 ```
 
-Run the opt-in deployed pagination integration test only when local Application Default
-Credentials can access the target Firestore project. It creates and removes uniquely named
-temporary records; it is intentionally excluded from `./gradlew test` and Cloud Build.
+Run the opt-in deployed integration suite only when local Application Default Credentials can
+access the target Firestore project. It covers MCP pagination and retrieval quality; it is
+intentionally excluded from `./gradlew test` and Cloud Build.
 
 ```bash
 export RECALL_API_KEY='...'
@@ -215,7 +215,10 @@ export RECALL_GCP_PROJECT_ID='your-project-id'
 ```
 
 Set `RECALL_URL` to test a non-default deployed MCP endpoint. The API key must be injected
-locally; do not retrieve it with `gcloud` or commit it to configuration.
+locally; do not retrieve it with `gcloud` or commit it to configuration. The retrieval evaluation
+generates fresh UUID-based primary and control `appId` namespaces, saves fixtures through MCP so
+they receive production embeddings, deletes only IDs returned by that run, and verifies both
+namespaces are empty after cleanup.
 
 `scripts/live-mcp-benchmark.sh` is retained only for sequential, client-observed deployed
 latency measurements. It is not a functional integration suite or a concurrency/load benchmark.

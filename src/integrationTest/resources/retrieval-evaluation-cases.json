@@ -1,0 +1,102 @@
+{
+  "fixtures": [
+    {
+      "key": "mcp-transport",
+      "namespace": "primary",
+      "text": "Recall is a stateless Streamable HTTP MCP server. Its public health endpoint is /v1/health and its MCP endpoint is /v1/mcp."
+    },
+    {
+      "key": "vector-scope",
+      "namespace": "primary",
+      "text": "Semantic retrieval filters by appId before Firestore nearest-neighbor vector search, so results stay within the requested project namespace."
+    },
+    {
+      "key": "embeddings",
+      "namespace": "primary",
+      "text": "Recall generates 1536-dimensional Gemini embeddings when a memory is saved and when a semantic query is retrieved."
+    },
+    {
+      "key": "cloud-free-tests",
+      "namespace": "primary",
+      "text": "The default test suite is cloud-free: it disables Secret Manager import and does not initialize ADC, Firestore, or Google embedding clients."
+    },
+    {
+      "key": "audit-pagination",
+      "namespace": "primary",
+      "text": "Use getMemories only for an explicit full-project audit. Omit the cursor for the first page, relay the server-issued nextCursor unchanged, and stop when it is null."
+    },
+    {
+      "key": "consolidation",
+      "namespace": "primary",
+      "text": "Before saving a durable candidate fact, retrieve the top 5 to 10 comparable memories, then choose add, no-op for a clear duplicate, or save-and-verify a replacement before deleting obsolete memory."
+    },
+    {
+      "key": "unrelated-distractor",
+      "namespace": "primary",
+      "text": "Recall deployments use Cloud Run and Cloud Build with application-level bearer authentication for the MCP endpoint."
+    },
+    {
+      "key": "cross-app-control",
+      "namespace": "control",
+      "text": "Semantic retrieval filters by appId before Firestore nearest-neighbor vector search, so results stay within the requested project namespace."
+    }
+  ],
+  "cases": [
+    {
+      "name": "task-start-architecture",
+      "namespace": "primary",
+      "query": "What transport does Recall provide and which endpoints should a client use?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["mcp-transport"]
+    },
+    {
+      "name": "subsystem-decision",
+      "namespace": "primary",
+      "query": "How does semantic search avoid returning memories from another project?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["vector-scope"]
+    },
+    {
+      "name": "embedding-paraphrase",
+      "namespace": "primary",
+      "query": "When are vectors produced for stored notes and for a lookup?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["embeddings"]
+    },
+    {
+      "name": "cloud-free-testing",
+      "namespace": "primary",
+      "query": "Can the regular automated tests depend on Google Cloud credentials?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["cloud-free-tests"]
+    },
+    {
+      "name": "full-audit-pagination",
+      "namespace": "primary",
+      "query": "How should a client page through every memory during a full audit?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["audit-pagination"]
+    },
+    {
+      "name": "consolidation-comparables",
+      "namespace": "primary",
+      "query": "Before adding a new durable memory, what existing context should the client check?",
+      "topN": 3,
+      "mustContainFixtureKeys": ["consolidation"]
+    },
+    {
+      "name": "unrelated-query",
+      "namespace": "primary",
+      "query": "How do I configure Kubernetes GPU autoscaling?",
+      "topN": 3,
+      "mustContainFixtureKeys": []
+    },
+    {
+      "name": "cross-app-control",
+      "namespace": "control",
+      "query": "How does semantic search prevent cross-project memory results?",
+      "topN": 1,
+      "mustContainFixtureKeys": ["cross-app-control"]
+    }
+  ]
+}

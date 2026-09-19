@@ -611,17 +611,23 @@ tasks are ready for deployment.
 
 **Goal:** Measure useful retrieval behavior before changing ranking or introducing a similarity cutoff.
 
-- [ ] **Task 14.1a: Define a small relevance dataset** *(user)*
+- [x] **Task 14.1a: Define a small relevance dataset** *(user)*
     - Include task-start context, subsystem decisions, paraphrases, unrelated queries, and comparable memories for
       consolidation.
     - Done when each case has a query, expected relevant IDs or facts, chosen `topN`, and any cross-app control.
-- [ ] **Task 14.1b: Build an opt-in retrieval evaluation runner** *(Codex; after Task 14.1a)*
+- [x] **Task 14.1b: Build an opt-in retrieval evaluation runner** *(Codex; after Task 14.1a)*
     - Capture observed rankings against the expected results, using isolated fixtures and cleanup verification for live
       runs.
     - Keep live evaluation outside the default cloud-free test suite and Cloud Build.
 - [ ] **Task 14.1c: Record the retrieval baseline** *(user reviews relevance; Codex runs evaluation; after Task 14.1b)*
     - Run the representative cases, record missed facts and irrelevant results, and verify fixture cleanup.
-    - Decide whether distance reporting is useful; record adoption or deferral before Tasks 14.2a–14.2b.
+     - Decide whether distance reporting is useful; record adoption or deferral before Tasks 14.2a–14.2b.
+     - Initial live evaluation (2026-09-19): the UUID-isolated primary/control fixture run passed and both namespaces
+       were verified empty after MCP cleanup. Seven expected-match cases (task-start architecture, subsystem decision,
+       embedding paraphrase, cloud-free tests, audit pagination, consolidation comparables, and cross-app control)
+       achieved hit@1 `7/7`, hit@k `7/7`, and MRR `1.000`. The unrelated Kubernetes GPU-autoscaling query returned
+       three irrelevant Recall fixtures, so it provides evidence to evaluate a future cutoff but does not justify an
+       arbitrary threshold. Distance reporting remains undecided.
 - [ ] **Task 14.2a: Add search distance reporting** *(user; if adopted in Task 14.1c; after Task 12.3e)*
     - Expose Firestore cosine distance in a dedicated search result DTO.
     - Clearly document that lower cosine distance means closer results and that distance is not a probability of
