@@ -27,7 +27,7 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
   latency-benchmark verification complete.
 - [x] Day 12: Harness-facing MCP contract — retrieval guidance, tool metadata, public response DTOs, and transport
   coverage.
-- [ ] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, bearer
+- [x] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, bearer
   parsing, and deployed verification.
 - [ ] Day 14: Retrieval quality evaluation — representative queries, distance reporting, and an evidence-based threshold
   decision.
@@ -589,10 +589,21 @@ tasks are ready for deployment.
       short/malformed schemes, a missing delimiter, Basic authentication, wrong tokens, and differently cased tokens.
       With common ADC/project variables unset, the focused filter test and `./gradlew test` passed; `git diff --check`
       passed.
-- [ ] **Task 13.4: Verify deployed fixes** *(user reviews deployment; Codex runs checks; after Tasks 13.1–13.3)*
+- [x] **Task 13.4: Verify deployed fixes** *(user reviews deployment; Codex runs checks; after Tasks 13.1–13.3)*
     - Run the cloud-free test suite and verify self-hosted configuration precedence.
     - After deployment, verify accepted bearer scheme variants and scoped retrieval using isolated fixtures; delete and
       verify cleanup of any created records.
+    - Partial verification (2026-09-19): with common ADC/project environment variables unset, `./gradlew test
+      --rerun-tasks` passed. The clean, `origin/main`-aligned project configuration contains only the OpenCode schema,
+      so it cannot override an owner's global `recall` endpoint. `./gradlew liveIntegrationTest` passed against the
+      default deployed endpoint. A separate deployed MCP check saved matching primary/control fixtures in unique
+      namespaces, retrieved only the requested primary namespace through `getTopNClosest`, deleted both fixtures, and
+      verified both namespaces empty. The endpoint accepted the conventional `Bearer` scheme but returned `401` for
+      `bearer` and `BeArEr`; do not close this task until the Cloud Build GitHub push deployment includes
+      `688f151` and those variants are re-verified.
+    - Completed after deployment (2026-09-19): the recheck accepted `Bearer`, `bearer`, and `BeArEr` for MCP
+      initialization. Isolated matching primary/control fixtures again proved `getTopNClosest` returns only the
+      requested namespace; both records were deleted and their namespaces verified empty.
 
 ---
 
