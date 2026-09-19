@@ -39,7 +39,9 @@ Recall is a cloud-hosted memory service for AI agents working on coding and non-
 - Spring Cloud GCP resolves the key directly using `sm@RECALL_API_KEY` and the Cloud Run service identity; the key must not be committed to configuration, logs, or environment variables.
 - The runtime service account has Secret Manager Secret Accessor on that secret and Cloud Datastore User for Firestore.
 - Embedding inference requires the Agent Platform API and Agent Platform User (`roles/aiplatform.user`) on the runtime service account.
-- `/v1/mcp` requires `Authorization: Bearer <RECALL_API_KEY>`.
+- `/v1/mcp` requires `Authorization: Bearer <RECALL_API_KEY>`. The `Bearer` authentication scheme is
+  case-insensitive, while the API-key credential remains case-sensitive. Missing, malformed, or invalid authorization
+  headers receive the generic `401` response with `WWW-Authenticate: Bearer`.
 - `/v1/health` remains unauthenticated for health checks.
 - Cloud Run public access is intentional for remote MCP connectivity; application-level authentication protects memory operations.
 

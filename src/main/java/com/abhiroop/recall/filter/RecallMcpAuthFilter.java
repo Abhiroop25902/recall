@@ -38,7 +38,14 @@ public class RecallMcpAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || authHeader.length() < 7) {
+            sendUnauthorizedResponse(response);
+            return;
+        }
+
+        String starting = authHeader.substring(0, 7);
+
+        if (!starting.equalsIgnoreCase("bearer ")) {
             sendUnauthorizedResponse(response);
             return;
         }

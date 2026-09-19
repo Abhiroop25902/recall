@@ -27,8 +27,8 @@ the health endpoint is `/v1/health`, and the MCP endpoint is `/v1/mcp`.
   latency-benchmark verification complete.
 - [x] Day 12: Harness-facing MCP contract — retrieval guidance, tool metadata, public response DTOs, and transport
   coverage.
-- [ ] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, and bearer
-  parsing.
+- [ ] Day 13: Integration and retrieval fixes — self-hosted endpoint configuration, bounded existence checks, bearer
+  parsing, and deployed verification.
 - [ ] Day 14: Retrieval quality evaluation — representative queries, distance reporting, and an evidence-based threshold
   decision.
 - [ ] Day 15: App-scoped deletion — namespace mistake protection and client migration.
@@ -577,12 +577,18 @@ tasks are ready for deployment.
     - Verified locally (2026-09-18): repository query-chain coverage asserts the ID-only projection, app filter,
       `limit(1)`, and empty/nonempty responses. Service and real-MCP fixtures use boolean existence results; the
       cloud-free `./gradlew test` suite passed with common ADC/project environment variables unset.
-- [ ] **Task 13.3a: Accept case-insensitive bearer schemes** *(user)*
+- [x] **Task 13.3a: Accept case-insensitive bearer schemes** *(user)*
     - Parse the HTTP authentication scheme case-insensitively while keeping credential comparison case-sensitive.
     - Preserve generic `401` responses and `WWW-Authenticate: Bearer` for invalid credentials.
-- [ ] **Task 13.3b: Verify bearer interoperability** *(Codex; after Task 13.3a)*
+    - Verified locally (2026-09-19): the filter accepts a case-insensitive `Bearer ` scheme while retaining
+      case-sensitive API-key comparison and the generic bearer challenge for invalid input.
+- [x] **Task 13.3b: Verify bearer interoperability** *(Codex; after Task 13.3a)*
     - Cover `Bearer`, lowercase `bearer`, and mixed-case schemes through the real MCP route.
     - Verify malformed headers and invalid or differently cased tokens remain rejected.
+    - Verified locally (2026-09-19): cloud-free real-MCP tests cover standard, lowercase, and mixed-case schemes plus
+      short/malformed schemes, a missing delimiter, Basic authentication, wrong tokens, and differently cased tokens.
+      With common ADC/project variables unset, the focused filter test and `./gradlew test` passed; `git diff --check`
+      passed.
 - [ ] **Task 13.4: Verify deployed fixes** *(user reviews deployment; Codex runs checks; after Tasks 13.1–13.3)*
     - Run the cloud-free test suite and verify self-hosted configuration precedence.
     - After deployment, verify accepted bearer scheme variants and scoped retrieval using isolated fixtures; delete and

@@ -106,7 +106,14 @@ class RecallMcpAuthFilterMvcTest {
     }
 
     static Stream<String> malformedOrInvalidAuthorizationHeaders() {
-        return Stream.of("Basic test-api-key", "Bearer wrong-api-key");
+        return Stream.of(
+                "b",
+                "bearer",
+                "bearertest-api-key",
+                "Basic test-api-key",
+                "Bearer wrong-api-key",
+                "Bearer TEST-API-KEY"
+        );
     }
 
     @Test
@@ -116,10 +123,11 @@ class RecallMcpAuthFilterMvcTest {
         assertThat(applicationContext.getBeansOfType(GoogleGenAiTextEmbeddingModel.class)).isEmpty();
     }
 
-    @Test
-    void validCredentialReachesRealMcpInitialize() throws Exception {
+    @ParameterizedTest
+    @MethodSource("validAuthorizationHeaders")
+    void validBearerSchemesReachRealMcpInitialize(String authorizationHeader) throws Exception {
         mockMvc.perform(post("/v1/mcp")
-                        .header("Authorization", "Bearer test-api-key")
+                        .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_EVENT_STREAM)
                         .content(INITIALIZE_REQUEST))
@@ -138,6 +146,14 @@ class RecallMcpAuthFilterMvcTest {
                         org.hamcrest.Matchers.containsString("stop for audit if reconciliation is inconclusive")
                 )))
                 .andExpect(jsonPath("$.error").doesNotExist());
+    }
+
+    static Stream<String> validAuthorizationHeaders() {
+        return Stream.of(
+                "Bearer test-api-key",
+                "bearer test-api-key",
+                "BeArEr test-api-key"
+        );
     }
 
 }
