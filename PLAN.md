@@ -619,15 +619,17 @@ tasks are ready for deployment.
     - Capture observed rankings against the expected results, using isolated fixtures and cleanup verification for live
       runs.
     - Keep live evaluation outside the default cloud-free test suite and Cloud Build.
-- [ ] **Task 14.1c: Record the retrieval baseline** *(user reviews relevance; Codex runs evaluation; after Task 14.1b)*
+- [x] **Task 14.1c: Record the retrieval baseline** *(user reviews relevance; Codex runs evaluation; after Task 14.1b)*
     - Run the representative cases, record missed facts and irrelevant results, and verify fixture cleanup.
-     - Decide whether distance reporting is useful; record adoption or deferral before Tasks 14.2a–14.2b.
+     - Decision (2026-09-19): adopt distance reporting. It will compare relevant and irrelevant retrieval-result
+       distributions before any threshold decision; cosine distance is diagnostic evidence, not a probability of
+       relevance.
      - Initial live evaluation (2026-09-19): the UUID-isolated primary/control fixture run passed and both namespaces
        were verified empty after MCP cleanup. Seven expected-match cases (task-start architecture, subsystem decision,
        embedding paraphrase, cloud-free tests, audit pagination, consolidation comparables, and cross-app control)
        achieved hit@1 `7/7`, hit@k `7/7`, and MRR `1.000`. The unrelated Kubernetes GPU-autoscaling query returned
        three irrelevant Recall fixtures, so it provides evidence to evaluate a future cutoff but does not justify an
-       arbitrary threshold. Distance reporting remains undecided.
+       arbitrary threshold. Distance reporting is now adopted for the evaluation described above.
 - [ ] **Task 14.2a: Add search distance reporting** *(user; if adopted in Task 14.1c; after Task 12.3e)*
     - Expose Firestore cosine distance in a dedicated search result DTO.
     - Clearly document that lower cosine distance means closer results and that distance is not a probability of

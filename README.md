@@ -237,19 +237,26 @@ cleanup policy.
 
 ## Current latency observation
 
-At `2026-09-11T11:47:49Z`, the deployed benchmark made an unmeasured health request,
-then five warm-up saves. It also performed an unreported control-namespace retrieval to
-verify app scoping before measuring primary-namespace retrievals.
+In the October 23, 2026 run (`20261023T025306Z-59956`), the deployed benchmark used
+`https://recall.abhiroop.dev/v1/mcp`. An unmeasured health request and five warm-up
+saves preceded the measured requests. Warm-up and control requests are excluded
+from the table.
 
 | Operation                | Samples |    p50 |    p95 |
 |--------------------------|--------:|-------:|-------:|
-| Save                     |      30 | 670 ms | 879 ms |
-| Scoped top-one retrieval |      30 | 673 ms | 886 ms |
+| Save                     |      30 | 500 ms | 566 ms |
+| Scoped top-one retrieval |      30 | 553 ms | 617 ms |
 
-These are end-to-end client measurements that include network, Cloud Run, Vertex AI
-embeddings, and Firestore. This is a sequential client-observed measurement, not a
-concurrency or load benchmark. The benchmark verified app scoping in both temporary
-namespaces, then deleted and verified cleanup of all 36 temporary records it created.
+Retrieval repeated one query with `topN=1` over 35 memories in the primary namespace.
+The benchmark checked retrieval scoping in both the primary and control namespaces.
+
+These are end-to-end client measurements that include network and connection
+establishment, Cloud Run, Vertex AI embeddings, and Firestore. Percentiles use the
+nearest-rank method and are rounded to whole milliseconds.
+
+This is a sequential client-observed measurement, not a cold-start, concurrency, or
+load benchmark. All 36 temporary records were deleted, and both namespaces were
+verified empty.
 
 ## Development note
 
