@@ -45,7 +45,7 @@ This guide provisions a personal, single-user Recall deployment through the
 Google Cloud Console. It uses the generated Cloud Run URL; custom domains and
 load balancers are not required.
 
-**Agent-assisted setup:** Use the free [Recall MCP skill on Agensi](https://www.agensi.io/skills/recall-mcp)
+**Agent-assisted setup:** Use the free [Recall MCP skill on Agensi](https://www.agensi.io/r/ABHIROOP?to=/skills/recall-mcp)
 to help deploy your own instance, connect it to your agent, and verify the setup.
 You’ll need an Agensi account; Google Cloud charges still apply.
 
